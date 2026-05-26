@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PackerApp</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700;900&display=swap');
+
+  /* ── DARK THEME (default) ── */
+  :root, [data-theme="dark"] {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2230;
+    --border: #252830;
+    --accent: #00e5ff;
+    --accent-dim: rgba(0,229,255,0.12);
+    --success: #00ff88;
+    --success-dim: rgba(0,255,136,0.12);
+    --warn: #ffb800;
+    --warn-dim: rgba(255,184,0,0.12);
+    --danger: #ff4560;
+    --danger-dim: rgba(255,69,96,0.12);
+    --text: #e8eaf0;
+    --text2: #a0a8b8;
+    --muted: #5a6070;
+    --theme-icon: "☀️";
+  }
+
+  /* ── LIGHT THEME ── */
+  [data-theme="light"] {
+    --bg: #f0f2f7;
+    --surface: #ffffff;
+    --surface2: #e8eaf2;
+    --border: #d0d4e0;
+    --accent: #0077cc;
+    --accent-dim: rgba(0,119,204,0.10);
+    --success: #00994d;
+    --success-dim: rgba(0,153,77,0.10);
+    --warn: #c47f00;
+    --warn-dim: rgba(196,127,0,0.10);
+    --danger: #cc2244;
+    --danger-dim: rgba(204,34,68,0.10);
+    --text: #1a1e2e;
+    --text2: #4a5068;
+    --muted: #8890a8;
+    --theme-icon: "🌙";
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 10;
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .logo-mark {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  [data-theme="dark"] .logo-mark svg { fill: #0d0f14; }
+  [data-theme="light"] .logo-mark svg { fill: #ffffff; }
+  .logo-mark svg { width: 17px; height: 17px; }
+  .header-text h1 {
+    font-size: 14px; font-weight: 900; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .header-text p { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; }
+
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+  .theme-btn {
+    background: none; border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 8px; cursor: pointer;
+    font-size: 14px; line-height: 1; color: var(--text2);
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .theme-btn:hover { background: var(--surface2); }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted);
+    transition: all 0.3s;
+  }
+  .status-dot.live {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { box-shadow: 0 0 6px var(--success); }
+    50%      { box-shadow: 0 0 14px var(--success); }
+  }
+
+  /* ── MAIN ── */
+  main {
+    flex: 1;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    transition: background 0.25s, border-color 0.25s;
+  }
+
+  /* ── USER INPUT ── */
+  .user-row { display: flex; gap: 8px; align-items: stretch; }
+  .user-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px; font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.25s;
+  }
+  .user-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+  .user-input.locked { border-color: var(--success); color: var(--success); background: var(--success-dim); }
+  .lock-btn {
+    background: var(--accent-dim); border: 1px solid var(--accent);
+    border-radius: 8px; color: var(--accent);
+    font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0 14px; cursor: pointer; transition: background 0.2s; white-space: nowrap;
+  }
+  .lock-btn:hover { background: rgba(0,229,255,0.22); }
+  .lock-btn.locked { background: var(--success-dim); border-color: var(--success); color: var(--success); }
+  .user-hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* ── SCANNER ── */
+  .scanner-outer {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  #reader { width: 100%; min-height: 220px; }
+  #reader > div { border-radius: 8px !important; }
+  #reader video { border-radius: 0 !important; }
+  #reader__scan_region { background: transparent !important; }
+  #reader__dashboard { padding: 10px 12px !important; background: var(--surface2) !important; }
+  #reader__dashboard_section_csr button,
+  #reader__dashboard_section_swaplink { display: none !important; }
+  #html5-qrcode-button-camera-permission,
+  #html5-qrcode-button-camera-start,
+  #html5-qrcode-button-camera-stop {
+    background: var(--accent-dim) !important; border: 1px solid var(--accent) !important;
+    color: var(--accent) !important; border-radius: 6px !important;
+    font-family: 'Barlow', sans-serif !important; font-weight: 700 !important;
+    font-size: 12px !important; letter-spacing: 0.08em !important;
+    text-transform: uppercase !important; padding: 8px 16px !important; cursor: pointer !important;
+  }
+  select#html5-qrcode-select-camera {
+    background: var(--surface) !important; color: var(--text) !important;
+    border: 1px solid var(--border) !important; border-radius: 6px !important;
+    font-family: 'Barlow', sans-serif !important; padding: 6px 8px !important;
+  }
+
+  /* ── CAMERA TOGGLE ── */
+  .cam-header { display: flex; align-items: center; justify-content: space-between; }
+  .cam-toggle-btn {
+    background: var(--accent-dim); border: 1px solid var(--accent);
+    border-radius: 6px; color: var(--accent);
+    font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 10px; cursor: pointer; transition: background 0.2s;
+  }
+  .cam-toggle-btn:hover { background: rgba(0,229,255,0.2); }
+  .cam-toggle-btn.off {
+    background: var(--surface2); border-color: var(--border);
+    color: var(--muted);
+  }
+  .cam-body {
+    overflow: hidden;
+    max-height: 400px;
+    transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.3s ease;
+    margin-top: 10px;
+    opacity: 1;
+  }
+  .cam-body.hidden {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+  }
+
+  /* ── BARCODE GUN INPUT ── */
+  .manual-row { display: flex; gap: 8px; margin-top: 10px; }
+  .barcode-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 11px 14px; color: var(--text);
+    font-family: 'Share Tech Mono', monospace; font-size: 14px;
+    outline: none; transition: border-color 0.2s, background 0.25s;
+  }
+  .barcode-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+  .submit-btn {
+    background: var(--accent); border: none; border-radius: 8px;
+    color: #fff; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 900;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 0 18px;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  }
+  [data-theme="dark"] .submit-btn { color: #0d0f14; }
+  .submit-btn:hover { opacity: 0.85; }
+  .submit-btn:active { transform: scale(0.97); }
+
+  /* ── RESULT CARD ── */
+  #result-card {
+    border-radius: 10px; padding: 13px 15px;
+    display: none; flex-direction: column; gap: 5px;
+    animation: slideIn 0.2s ease; border: 1px solid transparent;
+  }
+  #result-card.show { display: flex; }
+  #result-card.success { background: var(--success-dim); border-color: var(--success); }
+  #result-card.warning { background: var(--warn-dim); border-color: var(--warn); }
+  #result-card.error   { background: var(--danger-dim); border-color: var(--danger); }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .result-headline { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+  .result-headline.success { color: var(--success); }
+  .result-headline.warning { color: var(--warn); }
+  .result-headline.error   { color: var(--danger); }
+  .result-headline.loading { color: var(--text2); }
+  .result-barcode {
+    font-family: 'Share Tech Mono', monospace; font-size: 13px;
+    color: var(--text); background: rgba(128,128,128,0.08);
+    border-radius: 5px; padding: 4px 8px; word-break: break-all;
+  }
+  .result-detail { font-size: 12px; color: var(--text2); }
+
+  /* ── SESSION LOG ── */
+  #log-list { display: flex; flex-direction: column; gap: 6px; }
+  .log-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px;
+    display: flex; align-items: center; gap: 10px;
+    animation: fadeIn 0.25s ease;
+    transition: background 0.25s;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-5px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .log-icon { font-size: 14px; flex-shrink: 0; }
+  .log-barcode {
+    font-family: 'Share Tech Mono', monospace; font-size: 12px;
+    color: var(--accent); flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .log-meta { font-size: 10px; color: var(--muted); text-align: right; flex-shrink: 0; }
+  .log-meta span { display: block; }
+  .log-empty { font-size: 13px; color: var(--muted); text-align: center; padding: 18px 0; }
+
+  /* ── LEADERBOARD ── */
+  .leaderboard-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .leaderboard-date {
+    font-size: 11px; color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .refresh-btn {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--muted); font-size: 11px; padding: 3px 8px; cursor: pointer;
+    font-family: 'Barlow', sans-serif; font-weight: 600;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  #leaderboard-list { display: flex; flex-direction: column; gap: 8px; }
+  .lb-row {
+    display: flex; align-items: center; gap: 10px; padding: 4px 0;
+  }
+  .lb-row-inner { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .lb-rank {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    width: 20px; text-align: center; flex-shrink: 0;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .lb-rank.gold   { color: #ffd700; }
+  .lb-rank.silver { color: #b0b8c8; }
+  .lb-rank.bronze { color: #cd8f52; }
+  .lb-name {
+    font-size: 13px; font-weight: 700;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .lb-count {
+    font-size: 13px; font-weight: 900; color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    width: 40px; text-align: right; flex-shrink: 0;
+  }
+  .lb-stat-col {
+    width: 72px; text-align: right; flex-shrink: 0;
+    font-size: 11px; font-weight: 600; color: var(--text2);
+    font-family: 'Share Tech Mono', monospace;
+    white-space: nowrap;
+  }
+  .lb-stat-col.lb-started { width: 46px; color: var(--muted); }
+  .lb-stat-slow { color: var(--danger) !important; }
+  .lb-stat-warn { color: var(--warn) !important; }
+  .lb-stat-fast { color: var(--success) !important; }
+  .lb-empty { font-size: 13px; color: var(--muted); text-align: center; padding: 18px 0; }
+  .lb-total {
+    text-align: right; font-size: 11px; color: var(--muted);
+    margin-top: 8px; font-family: 'Share Tech Mono', monospace;
+  }
+  .lb-avg {
+    font-size: 10px; color: var(--muted); margin-top: 2px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .lb-name-wrap { flex: 1; min-width: 0; overflow: hidden; }
+  .lb-subtext {
+    font-size: 10px; color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lb-runtime {
+    flex-shrink: 0; text-align: right; min-width: 52px;
+  }
+  .lb-runtime-val {
+    font-size: 12px; font-weight: 700; color: var(--text2);
+    font-family: 'Share Tech Mono', monospace; white-space: nowrap;
+  }
+  .lb-runtime-lbl {
+    font-size: 9px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.06em; font-family: 'Barlow', sans-serif;
+  }
+  .lb-col-headers {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 0 6px 0; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+  }
+  .lb-col-hdr {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted); font-family: 'Barlow', sans-serif;
+  }
+
+  /* ── CONFIG NOTICE ── */
+  .config-notice {
+    background: var(--warn-dim); border: 1px solid var(--warn);
+    border-radius: 8px; padding: 11px 13px;
+    font-size: 12px; color: var(--warn); line-height: 1.5;
+  }
+  .config-notice strong { display: block; font-size: 13px; margin-bottom: 3px; }
+  .config-notice code {
+    background: rgba(255,184,0,0.15); border-radius: 3px;
+    padding: 1px 5px; font-family: 'Share Tech Mono', monospace; font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 8.5l-9-5-9 5v7l9 5 9-5v-7zm-9-3l6.5 3.6-2.3 1.3L9.7 6.8 12 5.5zm-7 4.2l6 3.3v6.5l-6-3.3v-6.5zm8 9.8v-6.5l2.5-1.4V13l1.5-.8v-1.6l2-1.1v6.5l-6 3.3z"/></svg>
+  </div>
+  <div class="header-text">
+    <h1>PackerApp</h1>
+    <p>Dispatch Scanner</p>
+  </div>
+  <div class="header-right">
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">☀️</button>
+    <div class="status-dot" id="status-dot"></div>
+  </div>
+</header>
+
+<main>
+
+  <div class="config-notice" id="config-notice">
+    <strong>⚠ Setup required</strong>
+    Replace <code>YOUR_APPS_SCRIPT_URL</code> in this file with your Google Apps Script webhook URL.
+  </div>
+
+  <!-- USER -->
+  <div class="card">
+    <div class="section-label">Operative Name</div>
+    <div class="user-row">
+      <input class="user-input" type="text" id="user-input" placeholder="Enter your name…" autocomplete="off" spellcheck="false">
+      <button class="lock-btn" id="lock-btn" onclick="toggleLock()">Lock</button>
+    </div>
+    <div class="user-hint" id="user-hint">Enter your name once — it stays set until you change it.</div>
+  </div>
+
+  <!-- CAMERA -->
+  <div class="card">
+    <div class="cam-header">
+      <div class="section-label" style="margin-bottom:0">Camera Scanner</div>
+      <button class="cam-toggle-btn off" id="cam-toggle-btn" onclick="toggleCamera()">▶ Start</button>
+    </div>
+    <div class="cam-body hidden" id="cam-body">
+      <div class="scanner-outer">
+        <div id="reader"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARCODE GUN -->
+  <div class="card">
+    <div class="section-label">Barcode Gun / Manual Entry</div>
+    <div class="manual-row">
+      <input class="barcode-input" type="text" id="barcode-input" placeholder="Scan or type barcode…" autocomplete="off" spellcheck="false">
+      <button class="submit-btn" onclick="handleManualSubmit()">Log</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-card"></div>
+
+  <!-- LEADERBOARD -->
+  <div class="card">
+    <div class="leaderboard-header">
+      <div>
+        <div class="section-label" style="margin-bottom:2px">Today's Leaderboard</div>
+        <div class="leaderboard-date" id="lb-date"></div>
+      </div>
+      <button class="refresh-btn" id="refresh-btn" onclick="loadLeaderboard()">↻ Refresh</button>
+    </div>
+    <div class="lb-col-headers">
+      <div style="width:24px;flex-shrink:0"></div>
+      <div class="lb-col-hdr" style="flex:1">Operative</div>
+      <div class="lb-col-hdr" style="width:40px;text-align:right">Pkgs</div>
+      <div class="lb-col-hdr" style="width:46px;text-align:right">Started</div>
+      <div class="lb-col-hdr" style="width:72px;text-align:right">Avg/pkg</div>
+      <div class="lb-col-hdr" style="width:72px;text-align:right">Runtime</div>
+    </div>
+    <div id="lb-status" style="font-size:11px;color:var(--muted);margin-bottom:8px;min-height:14px;font-family:'Share Tech Mono',monospace;"></div>
+    <div id="leaderboard-list"><div class="lb-empty">Loading…</div></div>
+    <div class="lb-total" id="lb-total"></div>
+  </div>
+
+  <!-- SESSION LOG -->
+  <div class="card">
+    <div class="section-label">Session Log</div>
+    <div id="log-list">
+      <div class="log-empty" id="log-empty">No scans yet this session.</div>
+    </div>
+  </div>
+
+  <!-- DEBUG PANEL -->
+  <div class="card" id="debug-card" style="display:none">
+    <div class="debug-header" onclick="toggleDebug()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+      <div class="section-label" style="margin-bottom:0">Debug — Raw CSV Data</div>
+      <span id="debug-chevron" style="font-size:11px;color:var(--muted);">▶ Show</span>
+    </div>
+    <div id="debug-body" style="display:none;margin-top:10px;">
+      <pre id="debug-out" style="font-size:10px;color:var(--text2);white-space:pre-wrap;word-break:break-all;line-height:1.6;font-family:'Share Tech Mono',monospace;"></pre>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ─────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQ1kdPb7oyOnu9XCEDz6shxpQjkfe_xf2G5fUld5ockctorgtz28RwzT54dzMmuz-X/exec';
+const SHEET_ID  = '1UXSJ8UK41nkE7FtlpebEPnkAJ1yQ9MH-YUaFkMpkJn0';
+const SHEET_GID = '0';
+const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let userLocked = false;
+let sessionLog = [];
+let html5QrCode = null;
+let scannedBarcodes = new Map();
+let lastCameraBarcode = '';
+let lastCameraTime = 0;
+
+// ─────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────
+const savedTheme = localStorage.getItem('dispatch_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.getElementById('theme-btn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('theme-btn').textContent = next === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('dispatch_theme', next);
+}
+
+// ─────────────────────────────────────────────
+// CONFIG CHECK
+// ─────────────────────────────────────────────
+if (APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL') {
+  document.getElementById('config-notice').style.display = 'none';
+  document.getElementById('status-dot').classList.add('live');
+}
+
+// ─────────────────────────────────────────────
+// SHEET CACHE — load once, refresh every 30s
+// ─────────────────────────────────────────────
+async function refreshCache() {
+  try {
+    const resp = await fetch(CSV_URL + '&t=' + Date.now());
+    if (!resp.ok) return;
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.length >= 3 && row[2].trim()) {
+        scannedBarcodes.set(row[2].trim().toUpperCase(), { timestamp: row[0].trim(), user: row[1].trim().toUpperCase() });
+      }
+    }
+  } catch {}
+}
+refreshCache();
+setInterval(refreshCache, 30000);
+
+// ─────────────────────────────────────────────
+// LEADERBOARD
+// ─────────────────────────────────────────────
+function getTodayUKDateString() {
+  // Returns DD/MM/YYYY matching the timestamp format in the sheet
+  return new Date().toLocaleDateString('en-GB', {
+    timeZone: 'Europe/London', day: '2-digit', month: '2-digit', year: 'numeric'
+  });
+}
+
+document.getElementById('lb-date').textContent = getTodayUKDateString();
+
+// Parse a UK timestamp — handles multiple formats Google Sheets may export:
+// "DD/MM/YYYY HH:MM:SS", "DD/MM/YYYY, HH:MM:SS", "D/M/YYYY HH:MM:SS"
+function parseUKTimestamp(ts) {
+  try {
+    const clean = ts.trim().replace(',', ''); // remove any comma after date
+    const parts = clean.split(' ').filter(Boolean);
+    if (parts.length < 2) return null;
+    const datePart = parts[0];
+    const timePart = parts[1];
+    const dp = datePart.split('/');
+    const tp = timePart.split(':');
+    if (dp.length < 3 || tp.length < 2) return null;
+    const d = +dp[0], m = +dp[1], y = +dp[2];
+    const h = +tp[0], min = +tp[1], s = +(tp[2] || 0);
+    if (isNaN(d) || isNaN(m) || isNaN(y) || isNaN(h) || isNaN(min)) return null;
+    return new Date(y, m - 1, d, h, min, s);
+  } catch { return null; }
+}
+
+// For debugging: expose last raw timestamp seen
+let _lastRawTs = '';
+
+// Calculate avg despatch time for a user, ignoring gaps > 10 minutes
+function calcAvgTime(timestamps) {
+  if (timestamps.length < 2) return null;
+  const sorted = [...timestamps].sort((a, b) => a - b);
+  const gaps = [];
+  const TEN_MIN = 10 * 60 * 1000;
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = sorted[i] - sorted[i - 1];
+    if (gap <= TEN_MIN) gaps.push(gap);
+  }
+  if (!gaps.length) return null;
+  const avgMs = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+  return avgMs;
+}
+
+function formatDuration(ms) {
+  const totalSecs = Math.round(ms / 1000);
+  if (totalSecs < 60) return `${totalSecs}s avg`;
+  const mins = Math.floor(totalSecs / 60);
+  const secs = totalSecs % 60;
+  return secs > 0 ? `${mins}m ${secs}s avg` : `${mins}m avg`;
+}
+
+// Total active time: sum of all gaps <= 10 min (same logic as avg — ignores walk-away gaps)
+function calcTotalTime(timestamps) {
+  if (timestamps.length < 2) return null;
+  const sorted = [...timestamps].sort((a, b) => a - b);
+  const TEN_MIN = 10 * 60 * 1000;
+  let totalMs = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = sorted[i] - sorted[i - 1];
+    if (gap <= TEN_MIN) totalMs += gap;
+  }
+  return totalMs > 0 ? totalMs : null;
+}
+
+function formatTotal(ms) {
+  const totalSecs = Math.round(ms / 1000);
+  if (totalSecs < 60) return `${totalSecs}s total`;
+  const hrs  = Math.floor(totalSecs / 3600);
+  const mins = Math.floor((totalSecs % 3600) / 60);
+  const secs = totalSecs % 60;
+  if (hrs > 0) return secs > 0 ? `${hrs}h ${mins}m ${secs}s` : `${hrs}h ${mins}m`;
+  return secs > 0 ? `${mins}m ${secs}s total` : `${mins}m total`;
+}
+
+async function loadLeaderboard() {
+  const list     = document.getElementById('leaderboard-list');
+  const totalEl  = document.getElementById('lb-total');
+  const statusEl = document.getElementById('lb-status');
+  const refreshBtn = document.getElementById('refresh-btn');
+
+  refreshBtn.textContent = 'Loading…';
+  refreshBtn.disabled = true;
+
+  try {
+    const resp = await fetch(CSV_URL + '&cachebust=' + Date.now());
+    if (!resp.ok) throw new Error('Sheet fetch failed (HTTP ' + resp.status + ')');
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    const today = getTodayUKDateString();
+
+    // DEBUG — show raw first 8 rows so we can verify timestamp format
+    const debugCard = document.getElementById('debug-card');
+    const debugOut  = document.getElementById('debug-out');
+    if (debugCard && debugOut) {
+      debugCard.style.display = 'block';
+      const sample = rows.slice(0, 8).map((r, i) =>
+        `Row ${i}: [${r.map(f => JSON.stringify(f)).join(', ')}]`
+      ).join('\n');
+      // Also show parse test on first data row
+      let parseTest = '';
+      if (rows.length > 1) {
+        const testTs = rows[1][0] ? rows[1][0].trim() : '(empty)';
+        const testDt = parseUKTimestamp(testTs);
+        parseTest = `\n\nparse test on row 1 timestamp:\n  raw:    ${JSON.stringify(testTs)}\n  parsed: ${testDt ? testDt.toISOString() : 'NULL — format not recognised'}`;
+      }
+      debugOut.textContent = `today="${today}"\nrows found: ${rows.length}${parseTest}\n\n${sample}`;
+    }
+
+    // Build per-user data: count + timestamps for avg calc
+    const userData = {}; // { user: { count, timestamps: [] } }
+    let total = 0;
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length < 3) continue;
+      const tsRaw  = row[0].trim();
+      const user   = (row[1].trim().toUpperCase()) || 'UNKNOWN';
+      // Date part is first 10 chars: DD/MM/YYYY
+      const datePart = tsRaw.substring(0, 10);
+      if (datePart !== today) continue;
+
+      if (!userData[user]) userData[user] = { count: 0, timestamps: [], rawSample: tsRaw, firstScan: tsRaw };
+      userData[user].count++;
+      _lastRawTs = tsRaw;
+      const dt = parseUKTimestamp(tsRaw);
+      if (dt) userData[user].timestamps.push(dt);
+      total++;
+    }
+
+    const sorted = Object.entries(userData).sort((a, b) => b[1].count - a[1].count);
+
+    if (!sorted.length) {
+      list.innerHTML = '<div class="lb-empty">No dispatches recorded today yet.</div>';
+      totalEl.textContent = '';
+      statusEl.textContent = 'Last updated: ' + new Date().toLocaleTimeString('en-GB');
+      return;
+    }
+
+    const max = sorted[0][1].count;
+    const rankSymbols = ['🥇', '🥈', '🥉'];
+    const rankClasses = ['gold', 'silver', 'bronze'];
+
+    list.innerHTML = sorted.map(([name, data], i) => {
+      const avg   = calcAvgTime(data.timestamps);
+      const total = calcTotalTime(data.timestamps);
+      const avgText   = avg   !== null ? formatDuration(avg)   : (data.count < 2 ? 'need 2+ scans' : '—');
+      const totalText = total !== null ? formatTotal(total)     : '—';
+      // First scan time — extract HH:MM from raw timestamp string
+      const startTime = data.firstScan ? data.firstScan.trim().split(' ')[1]?.substring(0, 5) || '—' : '—';
+      const rankSymbol = rankSymbols[i] || (i + 1);
+      const rankClass  = rankClasses[i] || '';
+      return `
+        <div class="lb-row">
+          <div class="lb-rank ${rankClass}">${rankSymbol}</div>
+          <div class="lb-name-wrap">
+            <div class="lb-name">${escHtml(name)}</div>
+          </div>
+          <div class="lb-count">${data.count}</div>
+          <div class="lb-stat-col lb-started">${startTime}</div>
+          <div class="lb-stat-col ${avg === null ? '' : avg > 70000 ? 'lb-stat-slow' : avg >= 59000 ? 'lb-stat-warn' : 'lb-stat-fast'}">${avgText}</div>
+          <div class="lb-stat-col">${totalText}</div>
+        </div>`;
+    }).join('');
+
+    totalEl.textContent = `${total} total dispatched today`;
+    statusEl.textContent = 'Last updated: ' + new Date().toLocaleTimeString('en-GB');
+
+  } catch(err) {
+    list.innerHTML = `<div class="lb-empty">Could not load leaderboard.<br><span style="font-size:10px;opacity:0.6">${err.message}</span></div>`;
+    statusEl.textContent = 'Failed — tap ↻ to retry';
+  } finally {
+    refreshBtn.textContent = '↻ Refresh';
+    refreshBtn.disabled = false;
+  }
+}
+
+loadLeaderboard();
+// Refresh every 20 minutes
+setInterval(loadLeaderboard, 20 * 60 * 1000);
+
+// ─────────────────────────────────────────────
+// USER LOCK
+// ─────────────────────────────────────────────
+const userInput = document.getElementById('user-input');
+const lockBtn   = document.getElementById('lock-btn');
+const userHint  = document.getElementById('user-hint');
+
+const savedUser = localStorage.getItem('dispatch_user');
+if (savedUser) { userInput.value = savedUser; setLocked(true); }
+
+function toggleLock() {
+  if (!userLocked) {
+    const name = userInput.value.trim().toUpperCase();
+    if (!name) { userInput.focus(); return; }
+    userInput.value = name;
+    setLocked(true);
+    localStorage.setItem('dispatch_user', name);
+  } else {
+    setLocked(false);
+    userInput.focus();
+  }
+}
+
+function setLocked(state) {
+  userLocked = state;
+  userInput.readOnly = state;
+  if (state) {
+    userInput.value = userInput.value.trim().toUpperCase();
+    userInput.classList.add('locked');
+    lockBtn.classList.add('locked');
+    lockBtn.textContent = 'Edit';
+    userHint.textContent = `Scanning as "${userInput.value}" — tap Edit to change.`;
+  } else {
+    userInput.classList.remove('locked');
+    lockBtn.classList.remove('locked');
+    lockBtn.textContent = 'Lock';
+    userHint.textContent = 'Enter your name once — it stays set until you change it.';
+  }
+}
+// Force uppercase as user types their name
+userInput.addEventListener('input', () => {
+  const pos = userInput.selectionStart;
+  userInput.value = userInput.value.toUpperCase();
+  userInput.setSelectionRange(pos, pos);
+});
+
+// ─────────────────────────────────────────────
+// BARCODE GUN
+// ─────────────────────────────────────────────
+const barcodeInput = document.getElementById('barcode-input');
+barcodeInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleManualSubmit(); });
+barcodeInput.addEventListener('input', () => {
+  const pos = barcodeInput.selectionStart;
+  barcodeInput.value = barcodeInput.value.toUpperCase();
+  barcodeInput.setSelectionRange(pos, pos);
+});
+
+function handleManualSubmit() {
+  const val = barcodeInput.value.trim().toUpperCase();
+  if (!val) return;
+  barcodeInput.value = '';
+  processBarcode(val);
+}
+
+// ─────────────────────────────────────────────
+// CAMERA SCANNER — toggle on/off
+// ─────────────────────────────────────────────
+html5QrCode = new Html5Qrcode('reader');
+const camConfig = { fps: 10, qrbox: { width: 260, height: 120 }, aspectRatio: 1.6 };
+let cameraRunning = false;
+let cameraStarting = false;
+
+async function toggleCamera() {
+  const btn  = document.getElementById('cam-toggle-btn');
+  const body = document.getElementById('cam-body');
+
+  if (cameraRunning) {
+    // STOP
+    try { await html5QrCode.stop(); } catch {}
+    cameraRunning = false;
+    body.classList.add('hidden');
+    btn.textContent = '▶ Start';
+    btn.classList.add('off');
+  } else {
+    if (cameraStarting) return;
+    cameraStarting = true;
+    // SHOW panel first so the video element has dimensions
+    body.classList.remove('hidden');
+    btn.textContent = '⏳ Starting…';
+    btn.classList.remove('off');
+    try {
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras || !cameras.length) throw new Error('No cameras found');
+      const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+      await html5QrCode.start(
+        { deviceId: { exact: cam.id } }, camConfig,
+        decodedText => handleCameraScan(decodedText), () => {}
+      ).catch(async () => {
+        await html5QrCode.start(
+          { facingMode: 'environment' }, camConfig,
+          decodedText => handleCameraScan(decodedText), () => {}
+        );
+      });
+      cameraRunning = true;
+      btn.textContent = '■ Stop';
+    } catch(err) {
+      body.classList.add('hidden');
+      btn.textContent = '▶ Start';
+      btn.classList.add('off');
+      showResult('error', '✗ Camera Error', err.message || 'Could not access camera.', '');
+    }
+    cameraStarting = false;
+  }
+}
+
+function handleCameraScan(barcode) {
+  const now = Date.now();
+  if (barcode === lastCameraBarcode && now - lastCameraTime < 3000) return;
+  lastCameraBarcode = barcode;
+  lastCameraTime = now;
+  processBarcode(barcode);
+}
+
+// ─────────────────────────────────────────────
+// CORE PROCESS — optimistic UI, background write
+// ─────────────────────────────────────────────
+function processBarcode(barcode) {
+  barcode = barcode.trim().toUpperCase();
+  const user = userInput.value.trim().toUpperCase();
+  if (!user) {
+    showResult('error', '✗ No Operative Set', 'Please enter your name before scanning.', barcode);
+    userInput.focus();
+    return;
+  }
+
+  // Instant local cache check — catches same-device duplicates with zero latency
+  const cached = scannedBarcodes.get(barcode);
+  if (cached) {
+    showResult('warning', '⚠ Already Dispatched', `First scanned at ${cached.timestamp} by ${cached.user}`, barcode);
+    addToSessionLog(barcode, cached.timestamp, cached.user, 'duplicate');
+    barcodeInput.value = '';
+    barcodeInput.focus();
+    return;
+  }
+
+  // Show success immediately — don't wait for network
+  const tsUK = getUKTimestamp();
+  scannedBarcodes.set(barcode, { timestamp: tsUK, user });
+  showResult('success', '✓ Dispatched', `Logged at ${tsUK} by ${user}`, barcode);
+  addToSessionLog(barcode, tsUK, user, 'success');
+  vibrate([80, 40, 80]);
+  barcodeInput.value = '';
+  barcodeInput.focus();
+
+  // Write to sheet in background — update display only if something unexpected happens
+  writeToSheet(barcode, tsUK, user).then(result => {
+    if (result.status === 'duplicate') {
+      // Another device already had this — correct the local cache and warn
+      scannedBarcodes.set(barcode, { timestamp: result.timestamp, user: result.user });
+      showResult('warning', '⚠ Already Dispatched', `First scanned at ${result.timestamp} by ${result.user}`, barcode);
+      // Reverse the session log entry
+      if (sessionLog.length && sessionLog[0].barcode === barcode) {
+        sessionLog[0].status = 'duplicate';
+        sessionLog[0].ts = result.timestamp;
+        sessionLog[0].user = result.user;
+        renderLog();
+      }
+    }
+  }).catch(() => {
+    // Write failed — remove from local cache so it can be retried
+    scannedBarcodes.delete(barcode);
+    showResult('error', '✗ Write Failed', 'Scan again to retry — check connection.', barcode);
+    if (sessionLog.length && sessionLog[0].barcode === barcode) {
+      sessionLog.shift();
+      renderLog();
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// WRITE
+// ─────────────────────────────────────────────
+async function writeToSheet(barcode, timestamp, user) {
+  if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL') throw new Error('Apps Script URL not configured.');
+  const url = APPS_SCRIPT_URL
+    + '?timestamp=' + encodeURIComponent(timestamp)
+    + '&user='      + encodeURIComponent(user)
+    + '&barcode='   + encodeURIComponent(barcode);
+  const resp = await fetch(url, { method: 'GET' });
+  if (!resp.ok) throw new Error('Apps Script returned an error.');
+  const json = await resp.json();
+  if (json.status === 'error') throw new Error(json.message || 'Unknown error from Apps Script.');
+  return json;
+}
+
+// ─────────────────────────────────────────────
+// CSV PARSER
+// ─────────────────────────────────────────────
+function parseCSV(text) {
+  return text.split('\n').map(line => {
+    const fields = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQ = !inQ; }
+      else if (line[i] === ',' && !inQ) { fields.push(cur); cur = ''; }
+      else cur += line[i];
+    }
+    fields.push(cur);
+    return fields;
+  });
+}
+
+// ─────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────
+function showResult(type, headline, detail, barcode) {
+  const card = document.getElementById('result-card');
+  card.className = 'result-card show ' + (type === 'loading' ? '' : type);
+  card.innerHTML = `
+    <div class="result-headline ${type}">
+      <span>${type==='success'?'✓':type==='warning'?'⚠':type==='error'?'✗':'⟳'}</span>
+      <span>${escHtml(headline)}</span>
+    </div>
+    <div class="result-barcode">${escHtml(barcode)}</div>
+    <div class="result-detail">${escHtml(detail)}</div>
+  `;
+}
+
+function addToSessionLog(barcode, ts, user, status) {
+  sessionLog.unshift({ barcode, ts, user, status });
+  renderLog();
+}
+
+function renderLog() {
+  const list = document.getElementById('log-list');
+  document.getElementById('log-empty').style.display = sessionLog.length ? 'none' : 'block';
+  [...list.querySelectorAll('.log-item')].forEach(el => el.remove());
+  sessionLog.slice(0, 15).forEach(entry => {
+    const div = document.createElement('div');
+    div.className = 'log-item';
+    div.innerHTML = `
+      <div class="log-icon">${entry.status === 'success' ? '✓' : '⚠'}</div>
+      <div class="log-barcode">${escHtml(entry.barcode)}</div>
+      <div class="log-meta"><span>${escHtml(entry.ts)}</span><span>${escHtml(entry.user)}</span></div>
+    `;
+    list.insertBefore(div, list.firstChild);
+  });
+}
+
+function getUKTimestamp() {
+  return new Date().toLocaleString('en-GB', {
+    timeZone: 'Europe/London',
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+}
+
+function vibrate(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleDebug() {
+  const body = document.getElementById('debug-body');
+  const chev = document.getElementById('debug-chevron');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  chev.textContent = open ? '▼ Hide' : '▶ Show';
+}
+</script>
+</body>
+</html>
