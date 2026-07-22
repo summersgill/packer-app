@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PickerApp</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700;900&display=swap');
+
+  :root, [data-theme="dark"] {
+    --bg:#0d0f14; --surface:#161920; --surface2:#1e2230; --border:#252830;
+    --accent:#00e5ff; --accent-dim:rgba(0,229,255,0.12);
+    --success:#00ff88; --success-dim:rgba(0,255,136,0.12);
+    --warn:#ffb800; --warn-dim:rgba(255,184,0,0.12);
+    --danger:#ff4560; --danger-dim:rgba(255,69,96,0.12);
+    --text:#e8eaf0; --text2:#a0a8b8; --muted:#5a6070;
+  }
+  [data-theme="light"] {
+    --bg:#f0f2f7; --surface:#ffffff; --surface2:#e8eaf2; --border:#d0d4e0;
+    --accent:#0077cc; --accent-dim:rgba(0,119,204,0.10);
+    --success:#00994d; --success-dim:rgba(0,153,77,0.10);
+    --warn:#c47f00; --warn-dim:rgba(196,127,0,0.10);
+    --danger:#cc2244; --danger-dim:rgba(204,34,68,0.10);
+    --text:#1a1e2e; --text2:#4a5068; --muted:#8890a8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100dvh;display:flex;flex-direction:column}
+
+  header{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface);position:sticky;top:0;z-index:10}
+  .logo-mark{width:28px;height:28px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  [data-theme="dark"] .logo-mark svg{fill:#0d0f14}
+  [data-theme="light"] .logo-mark svg{fill:#fff}
+  .logo-mark svg{width:15px;height:15px}
+  .header-text h1{font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .header-text p{font-size:9px;color:var(--muted);letter-spacing:.06em}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+  .theme-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:13px;line-height:1;color:var(--text2)}
+  .nav-links{display:flex;gap:4px}
+  .nav-links a{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--border);border-radius:6px;padding:3px 7px}
+  .nav-links a.current{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+
+  main{flex:1;padding:12px;display:flex;flex-direction:column;gap:10px;max-width:620px;width:100%;margin:0 auto}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .section-label{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+
+  /* SYNC STRIP */
+  .sync-bar{display:flex;align-items:center;gap:7px;font-size:10px;font-family:'Share Tech Mono',monospace;color:var(--muted);padding:5px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
+  .sync-dot.ok{background:var(--success)}
+  .sync-dot.busy{background:var(--warn);animation:pulse 1s infinite}
+  .sync-dot.bad{background:var(--danger)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .sync-retry{margin-left:auto;background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:9px;padding:2px 6px;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:700;text-transform:uppercase}
+
+  /* COLOUR STRIP — compact, six across */
+  .colour-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+  .colour-btn{border:2px solid var(--border);background:var(--surface2);border-radius:9px;padding:6px 2px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Barlow',sans-serif;transition:transform .07s,border-color .12s,background .12s;overflow:hidden}
+  .colour-btn:active{transform:scale(.94)}
+  .colour-swatch{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#fff;font-family:'Share Tech Mono',monospace;text-shadow:0 1px 2px rgba(0,0,0,.45);flex-shrink:0}
+  .colour-name{font-size:8px;font-weight:800;color:var(--text2);text-align:center;line-height:1.15;letter-spacing:.02em;text-transform:uppercase;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 1px}
+  .colour-btn.selected{border-color:currentColor;background:var(--surface);transform:scale(1.04)}
+  .colour-btn.selected .colour-name{color:var(--text)}
+  .colour-btn.selected .colour-swatch{box-shadow:0 0 0 3px currentColor}
+  .label-edit-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;cursor:pointer;font-family:'Barlow',sans-serif}
+
+  /* SCAN BOX */
+  .scan-status{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:12px 0 6px;display:flex;align-items:center;gap:7px}
+  .scan-status .live-dot{width:9px;height:9px;border-radius:50%;background:currentColor;animation:pulse 1.6s infinite;flex-shrink:0}
+  .barcode-row{display:flex;gap:7px}
+  .barcode-input{flex:1;background:var(--surface2);border:2px solid var(--border);border-radius:9px;padding:16px 14px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:19px;outline:none;min-width:0;transition:border-color .15s,box-shadow .15s}
+  .barcode-input:focus{box-shadow:0 0 0 3px var(--accent-dim)}
+  .barcode-input:disabled{opacity:.45}
+  .submit-btn{background:var(--accent);border:none;border-radius:9px;color:#0d0f14;font-family:'Barlow',sans-serif;font-size:13px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:0 20px;cursor:pointer}
+  [data-theme="light"] .submit-btn{color:#fff}
+  .submit-btn:active{transform:scale(.97)}
+  .submit-btn:disabled{opacity:.4}
+
+  /* RESULT */
+  #result-card{border-radius:10px;padding:12px 14px;display:none;flex-direction:column;gap:4px;border:1px solid transparent;animation:slideIn .15s ease}
+  #result-card.show{display:flex}
+  #result-card.success{background:var(--success-dim);border-color:var(--success)}
+  #result-card.warning{background:var(--warn-dim);border-color:var(--warn)}
+  #result-card.error{background:var(--danger-dim);border-color:var(--danger)}
+  @keyframes slideIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+  .result-headline{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.03em}
+  .result-headline.success{color:var(--success)}
+  .result-headline.warning{color:var(--warn)}
+  .result-headline.error{color:var(--danger)}
+  .result-barcode{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--text);background:rgba(128,128,128,.08);border-radius:5px;padding:5px 8px;word-break:break-all}
+  .result-detail{font-size:12px;color:var(--text2)}
+
+  /* LISTS */
+  .collapse-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+  .collapse-chevron{font-size:10px;color:var(--muted)}
+  .collapse-body{overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .25s ease,margin-top .25s ease;margin-top:0}
+  .collapse-body.open{max-height:2400px;opacity:1;margin-top:9px}
+  .scan-item{background:var(--surface2);border:1px solid var(--border);border-left-width:4px;border-radius:7px;padding:7px 10px;display:flex;align-items:center;gap:9px;margin-bottom:5px}
+  .scan-order{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .scan-meta{font-size:9px;color:var(--muted);text-align:right;flex-shrink:0;font-family:'Share Tech Mono',monospace;line-height:1.35}
+  .scan-state{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;padding:2px 6px;border-radius:4px}
+  .state-pending{background:var(--warn-dim);color:var(--warn)}
+  .state-saved{background:var(--success-dim);color:var(--success)}
+  .state-dupe{background:var(--danger-dim);color:var(--danger)}
+  .list-empty{font-size:12px;color:var(--muted);text-align:center;padding:14px 0}
+  .count-badge{font-size:9px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:10px;padding:1px 7px;font-family:'Share Tech Mono',monospace}
+  .floor-age{font-size:9px;font-family:'Share Tech Mono',monospace}
+  .age-old{color:var(--danger);font-weight:700}
+  .age-mid{color:var(--warn);font-weight:700}
+  .refresh-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:10px;padding:3px 8px;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:600}
+
+  /* OPTIONAL NAME */
+  .user-row{display:flex;gap:7px;align-items:stretch}
+  .user-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;font-weight:600;outline:none}
+  .user-input:focus{border-color:var(--accent)}
+  .user-input.locked{border-color:var(--success);color:var(--success);background:var(--success-dim)}
+  .lock-btn{background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:0 13px;cursor:pointer;white-space:nowrap;font-family:'Barlow',sans-serif}
+  .lock-btn.locked{background:var(--success-dim);border-color:var(--success);color:var(--success)}
+  .hint{font-size:10px;color:var(--muted);margin-top:5px}
+
+  /* CAMERA */
+  .cam-toggle-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;cursor:pointer;font-family:'Barlow',sans-serif}
+  .cam-toggle-btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+  .cam-body{overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .25s ease,margin-top .25s ease}
+  .cam-body.open{max-height:600px;opacity:1;margin-top:9px}
+  .scanner-outer{background:var(--surface2);border:1px solid var(--border);border-radius:9px;overflow:hidden}
+  #reader{width:100%;min-height:200px}
+  #reader__dashboard{padding:8px 10px!important;background:var(--surface2)!important}
+  #reader__dashboard_section_csr button,#reader__dashboard_section_swaplink{display:none!important}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}
+  .modal-box{background:var(--surface);border-radius:14px;padding:24px;max-width:360px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4);animation:popIn .16s ease}
+  @keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal-title{font-size:19px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px}
+  .modal-text{font-size:13px;color:var(--text2);margin-bottom:11px;line-height:1.55}
+  .modal-code{border-radius:8px;padding:8px 12px;font-family:'Share Tech Mono',monospace;font-size:14px;margin-bottom:16px;word-break:break-all}
+  .modal-btn{border:none;border-radius:8px;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;width:100%;letter-spacing:.06em;text-transform:uppercase;font-family:'Barlow',sans-serif;color:#fff}
+  .name-row{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .name-swatch{width:18px;height:18px;border-radius:50%;flex-shrink:0}
+  .name-colour{font-size:9px;font-weight:800;color:var(--muted);width:48px;flex-shrink:0;letter-spacing:.06em}
+  .name-input{flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;font-weight:700;outline:none;text-transform:uppercase}
+  .name-input:focus{border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24"><path d="M4 4h4l1.5 3H20l-2.5 8H8L5.5 6H4V4zm4.8 5l1.6 5h6.1l1.5-5H8.8zM9 17.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm8 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg>
+  </div>
+  <div class="header-text">
+    <h1>PickerApp</h1>
+    <p>Pick Note Scanner</p>
+  </div>
+  <div class="header-right">
+    <div class="nav-links">
+      <a href="picker.html" class="current">Pick</a>
+      <a href="packer.html">Pack</a>
+      <a href="status.html">Board</a>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀️</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="card" id="config-notice" style="display:none;border-color:var(--warn);color:var(--warn);font-size:12px">
+    <strong>Set the webhook URL</strong><br>Replace APPS_SCRIPT_URL in this file with your deployed Apps Script /exec URL.
+  </div>
+
+  <div class="sync-bar">
+    <span class="sync-dot ok" id="sync-dot"></span>
+    <span id="sync-text">All scans saved</span>
+    <button class="sync-retry" onclick="flush(true)">Retry</button>
+  </div>
+
+  <!-- COLOUR + SCAN -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="section-label" style="margin-bottom:0">Picker</div>
+      <button class="label-edit-btn" onclick="renameColours()">Rename</button>
+    </div>
+    <div class="colour-strip" id="colour-strip"></div>
+
+    <div class="scan-status" id="scan-status"><span class="live-dot"></span><span id="scan-status-text">Tap a picker to start</span></div>
+    <div class="barcode-row">
+      <input class="barcode-input" type="text" id="barcode-input" placeholder="Scan pick note…" autocomplete="off" spellcheck="false" disabled>
+      <button class="submit-btn" id="add-btn" onclick="handleManualSubmit()" disabled>Add</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-card"></div>
+
+  <!-- SESSION -->
+  <div class="card">
+    <div class="collapse-header" onclick="toggleCollapse('session')">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="section-label" style="margin-bottom:0">Scanned today</div>
+        <span class="count-badge" id="session-badge">0</span>
+      </div>
+      <span class="collapse-chevron" id="session-chevron">▼ Hide</span>
+    </div>
+    <div class="collapse-body open" id="session-body">
+      <div id="session-list"><div class="list-empty">Nothing scanned yet.</div></div>
+    </div>
+  </div>
+
+  <!-- FLOOR -->
+  <div class="card">
+    <div class="collapse-header" onclick="toggleCollapse('floor')">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="section-label" style="margin-bottom:0">Out being picked</div>
+        <span class="count-badge" id="floor-badge">–</span>
+      </div>
+      <span class="collapse-chevron" id="floor-chevron">▶ Show</span>
+    </div>
+    <div class="collapse-body" id="floor-body">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:7px">
+        <button class="refresh-btn" onclick="refreshKnown(true)">↻ Refresh</button>
+      </div>
+      <div id="floor-list"><div class="list-empty">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- CAMERA -->
+  <div class="card">
+    <div class="collapse-header">
+      <div class="section-label" style="margin-bottom:0">Camera scanner</div>
+      <button class="cam-toggle-btn" id="cam-toggle-btn" onclick="toggleCamera()">▶ Start</button>
+    </div>
+    <div class="cam-body" id="cam-body">
+      <div class="scanner-outer"><div id="reader"></div></div>
+    </div>
+  </div>
+
+  <!-- OPTIONAL NAME -->
+  <div class="card">
+    <div class="collapse-header" onclick="toggleCollapse('name')">
+      <div class="section-label" style="margin-bottom:0">Use a name instead <span id="name-state" style="color:var(--success)"></span></div>
+      <span class="collapse-chevron" id="name-chevron">▶ Show</span>
+    </div>
+    <div class="collapse-body" id="name-body">
+      <div class="user-row">
+        <input class="user-input" type="text" id="user-input" placeholder="Operator name…" autocomplete="off" spellcheck="false">
+        <button class="lock-btn" id="lock-btn" onclick="toggleLock()">Lock</button>
+      </div>
+      <div class="hint" id="user-hint">Leave this blank and the picker colour is recorded as the operator.</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ─────────── CONFIG ─────────── */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRxuwp4MEMFabo8PzK-xTDLamXxwW9BeazP7f_VRv0JFjXIkhf_yYSCMaBnP-ZHxhzIA/exec';
+const SHEET_ID  = '1UXSJ8UK41nkE7FtlpebEPnkAJ1yQ9MH-YUaFkMpkJn0';
+const PACK_GID  = '0';
+const PICK_TAB  = 'Picking';
+const packCsv = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${PACK_GID}&t=${Date.now()}`;
+const pickCsv = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(PICK_TAB)}&t=${Date.now()}`;
+
+const COLOURS = [
+  { id:'RED',    hex:'#ff4560' },
+  { id:'BLUE',   hex:'#2e8bff' },
+  { id:'GREEN',  hex:'#00c853' },
+  { id:'YELLOW', hex:'#ffc400' },
+  { id:'PURPLE', hex:'#a855f7' },
+  { id:'ORANGE', hex:'#ff7a1a' }
+];
+
+/* ─────────── STATE ─────────── */
+let selectedColour = localStorage.getItem('pick_colour') || '';
+let colourLabels   = JSON.parse(localStorage.getItem('pick_colour_labels') || '{}');
+let session        = JSON.parse(localStorage.getItem('pick_session') || '[]');
+let outbox         = JSON.parse(localStorage.getItem('pick_outbox') || '[]');
+let userLocked     = false;
+let knownPicking   = new Map();
+let knownPacked    = new Map();
+let html5QrCode=null, cameraRunning=false, cameraStarting=false;
+let lastCamCode='', lastCamTime=0;
+
+/* ─────────── THEME ─────────── */
+const savedTheme = localStorage.getItem('dispatch_theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.getElementById('theme-btn').textContent = savedTheme==='dark'?'☀️':'🌙';
+function toggleTheme(){
+  const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  document.getElementById('theme-btn').textContent=next==='dark'?'☀️':'🌙';
+  localStorage.setItem('dispatch_theme',next);
+  focusScan();
+}
+if(APPS_SCRIPT_URL.indexOf('PASTE_')===0) document.getElementById('config-notice').style.display='block';
+
+/* ─────────── UTIL ─────────── */
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+function ukNow(){ return new Date().toLocaleString('en-GB',{timeZone:'Europe/London',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).replace(',',''); }
+function todayUK(){ return new Date().toLocaleDateString('en-GB',{timeZone:'Europe/London',day:'2-digit',month:'2-digit',year:'numeric'}); }
+function parseUK(ts){
+  const p=String(ts).trim().replace(',','').split(' ').filter(Boolean);
+  if(p.length<2) return null;
+  const d=p[0].split('/'), t=p[1].split(':');
+  if(d.length<3||t.length<2) return null;
+  const dt=new Date(+d[2],+d[1]-1,+d[0],+t[0],+t[1],+(t[2]||0));
+  return isNaN(dt)?null:dt;
+}
+function vibrate(p){ if(navigator.vibrate) navigator.vibrate(p); }
+function parseCSV(text){
+  const rows=[]; let row=[],cur='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=c; }
+    else{
+      if(c==='"') inQ=true;
+      else if(c===','){ row.push(cur); cur=''; }
+      else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else if(c!=='\r') cur+=c;
+    }
+  }
+  if(cur||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function toggleCollapse(id){
+  const b=document.getElementById(id+'-body'), c=document.getElementById(id+'-chevron');
+  c.textContent = b.classList.toggle('open') ? '▼ Hide' : '▶ Show';
+  focusScan();
+}
+const colourHex  = id => (COLOURS.find(c=>c.id===id)||{}).hex || '#888';
+const colourName = id => colourLabels[id] || id;
+
+/* Value written to the Picker column */
+function operatorName(){
+  const typed = document.getElementById('user-input').value.trim().toUpperCase();
+  if(userLocked && typed) return typed;
+  return selectedColour ? colourName(selectedColour).toUpperCase() : '';
+}
+
+/* ─────────── FOCUS ─────────── */
+const barcodeInput = document.getElementById('barcode-input');
+function focusScan(){
+  if(barcodeInput.disabled) return;
+  if(document.getElementById('modal-overlay')||document.getElementById('rename-overlay')) return;
+  setTimeout(()=>{ try{ barcodeInput.focus({preventScroll:true}); }catch(e){ barcodeInput.focus(); } },0);
+}
+// a gun types into whatever has focus — pull it back to the scan box
+document.addEventListener('keydown', e=>{
+  const t=e.target;
+  if(t && (t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) return;
+  if(barcodeInput.disabled) return;
+  if(e.key.length===1 || e.key==='Enter') focusScan();
+});
+document.addEventListener('click', e=>{
+  if(e.target.closest('input,button,select,textarea,a,.collapse-header')) return;
+  focusScan();
+});
+window.addEventListener('focus', focusScan);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ focusScan(); flush(); }});
+
+/* ─────────── COLOURS ─────────── */
+function renderColours(){
+  const counts={}, today=todayUK();
+  session.forEach(s=>{ if(s.date===today) counts[s.colour]=(counts[s.colour]||0)+1; });
+  document.getElementById('colour-strip').innerHTML = COLOURS.map(c=>`
+    <button class="colour-btn ${selectedColour===c.id?'selected':''}" style="color:${c.hex}" onclick="selectColour('${c.id}')" title="${escHtml(colourName(c.id))}">
+      <span class="colour-swatch" style="background:${c.hex}">${counts[c.id]||''}</span>
+      <span class="colour-name">${escHtml(colourName(c.id))}</span>
+    </button>`).join('');
+}
+function selectColour(id){
+  selectedColour = (selectedColour===id) ? '' : id;
+  localStorage.setItem('pick_colour', selectedColour);
+  renderColours(); updateReady(); focusScan();
+}
+function renameColours(){
+  const old=document.getElementById('rename-overlay'); if(old) old.remove();
+  const o=document.createElement('div');
+  o.className='modal-overlay'; o.id='rename-overlay';
+  o.innerHTML=
+    '<div class="modal-box" style="text-align:left;max-width:400px;border:1px solid var(--border)">'+
+      '<div class="modal-title" style="color:var(--text);font-size:16px;text-align:center">Name your pickers</div>'+
+      '<div class="modal-text" style="text-align:center;margin-bottom:14px">Type the person on each colour. Leave blank to keep the colour name.</div>'+
+      COLOURS.map(function(c){
+        const cur=(colourLabels[c.id]&&colourLabels[c.id]!==c.id)?colourLabels[c.id]:'';
+        return '<div class="name-row">'+
+          '<span class="name-swatch" style="background:'+c.hex+'"></span>'+
+          '<span class="name-colour">'+c.id+'</span>'+
+          '<input class="name-input" id="nm-'+c.id+'" value="'+escHtml(cur)+'" placeholder="'+c.id+'" autocomplete="off" spellcheck="false">'+
+        '</div>';
+      }).join('')+
+      '<div style="display:flex;gap:8px;margin-top:16px">'+
+        '<button class="modal-btn" style="background:var(--surface2);color:var(--text2);flex:1" onclick="closeRename()">Cancel</button>'+
+        '<button class="modal-btn" style="background:var(--accent);flex:1" onclick="saveRename()">Save names</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(o);
+  o.addEventListener('click',function(e){ if(e.target===o) closeRename(); });
+  setTimeout(function(){ const f=document.getElementById('nm-'+COLOURS[0].id); if(f) f.focus(); },60);
+}
+function saveRename(){
+  COLOURS.forEach(function(c){
+    const el=document.getElementById('nm-'+c.id);
+    const v=el? el.value.trim().toUpperCase() : '';
+    colourLabels[c.id]= v || c.id;
+  });
+  localStorage.setItem('pick_colour_labels', JSON.stringify(colourLabels));
+  closeRename();
+  renderColours(); renderFloor(); renderSession(); updateReady();
+}
+function closeRename(){
+  const o=document.getElementById('rename-overlay');
+  if(o) o.remove();
+  focusScan();
+}
+
+function updateReady(){
+  const box=document.getElementById('scan-status');
+  const txt=document.getElementById('scan-status-text');
+  const addBtn=document.getElementById('add-btn');
+  if(!selectedColour){
+    box.style.color='var(--muted)';
+    txt.textContent='Tap a picker to start';
+    barcodeInput.disabled=true; addBtn.disabled=true;
+    barcodeInput.style.borderColor='';
+    barcodeInput.placeholder='Scan pick note…';
+    return;
+  }
+  box.style.color=colourHex(selectedColour);
+  txt.textContent='Ready — scanning as '+operatorName();
+  barcodeInput.disabled=false; addBtn.disabled=false;
+  barcodeInput.style.borderColor=colourHex(selectedColour);
+  barcodeInput.placeholder='Scan pick note…';
+  focusScan();
+}
+
+/* ─────────── OPTIONAL NAME ─────────── */
+const userInput=document.getElementById('user-input'), lockBtn=document.getElementById('lock-btn');
+const savedUser=localStorage.getItem('pick_user');
+if(savedUser){ userInput.value=savedUser; setLocked(true); }
+function toggleLock(){
+  if(!userLocked){
+    const n=userInput.value.trim().toUpperCase();
+    if(!n){ userInput.focus(); return; }
+    userInput.value=n; setLocked(true); localStorage.setItem('pick_user',n);
+  } else {
+    setLocked(false); localStorage.removeItem('pick_user'); userInput.focus();
+  }
+}
+function setLocked(state){
+  userLocked=state; userInput.readOnly=state;
+  userInput.classList.toggle('locked',state);
+  lockBtn.classList.toggle('locked',state);
+  lockBtn.textContent = state?'Clear':'Lock';
+  document.getElementById('user-hint').textContent = state
+    ? 'Scans are recorded as "'+userInput.value+'". The colour is still saved alongside.'
+    : 'Leave this blank and the picker colour is recorded as the operator.';
+  document.getElementById('name-state').textContent = state ? '· '+userInput.value : '';
+  updateReady();
+}
+userInput.addEventListener('input',()=>{const p=userInput.selectionStart;userInput.value=userInput.value.toUpperCase();userInput.setSelectionRange(p,p);});
+
+/* ─────────── SCAN INPUT ─────────── */
+barcodeInput.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); handleManualSubmit(); }});
+barcodeInput.addEventListener('input',()=>{const p=barcodeInput.selectionStart;barcodeInput.value=barcodeInput.value.toUpperCase();barcodeInput.setSelectionRange(p,p);});
+barcodeInput.addEventListener('blur',()=>setTimeout(focusScan,120));
+function handleManualSubmit(){
+  const v=barcodeInput.value.trim().toUpperCase();
+  if(!v) return;
+  barcodeInput.value='';
+  processScan(v);
+}
+function isValidBarcode(b){ return !/^H00RQA/i.test(b); }
+
+/* ─────────── CORE ─────────── */
+function processScan(raw){
+  const order=raw.trim().toUpperCase();
+  if(!order) return;
+  if(!selectedColour){ showResult('error','No picker selected','Tap a colour first.',order); return; }
+  const user=operatorName();
+
+  if(!isValidBarcode(order)){
+    showModal('Wrong barcode','That looks like a tracking number, not a pick note.',order,'var(--danger)');
+    vibrate([200]); return;
+  }
+  if(knownPacked.has(order)){
+    const p=knownPacked.get(order);
+    showResult('warning','Already packed','Packed at '+p.ts+' by '+p.user+'. Not added.',order);
+    vibrate([130,70,130]); focusScan(); return;
+  }
+  if(knownPicking.has(order)){
+    const p=knownPicking.get(order);
+    showResult('warning','Already scanned','Picked at '+p.ts+' by '+p.user+(p.colour?' · '+colourName(p.colour):'')+'. Not added.',order);
+    vibrate([130,70,130]); focusScan(); return;
+  }
+
+  const scan={ id:uid(), order, ts:ukNow(), date:todayUK(), user, colour:selectedColour, state:'pending' };
+  knownPicking.set(order,{ts:scan.ts,user,colour:selectedColour});
+  session.unshift(scan); saveSession();
+  outbox.push({id:scan.id,order,ts:scan.ts,user,colour:selectedColour}); saveOutbox();
+
+  showResult('success','Added',colourName(selectedColour)+' · '+(scan.ts.split(' ')[1]||''),order);
+  vibrate([55]);
+  renderSession(); renderColours();
+  barcodeInput.value=''; focusScan();
+  scheduleFlush(700);
+}
+
+/* ─────────── OUTBOX ─────────── */
+function saveOutbox(){ localStorage.setItem('pick_outbox',JSON.stringify(outbox)); updateSyncBar(); }
+function saveSession(){ session=session.slice(0,300); localStorage.setItem('pick_session',JSON.stringify(session)); }
+let flushTimer=null, flushing=false, backoff=0;
+function scheduleFlush(ms){ clearTimeout(flushTimer); flushTimer=setTimeout(()=>flush(),ms); }
+
+async function postBatch(scans){
+  try{
+    return await sendBatch('POST', scans);
+  }catch(err){
+    // POST can be blocked (local file, strict proxy, CORS). Retry as GET.
+    return await sendBatch('GET', scans);
+  }
+}
+
+async function sendBatch(method, scans){
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),30000);
+  try{
+    let resp;
+    if(method==='POST'){
+      resp=await fetch(APPS_SCRIPT_URL,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'pick',scans}),
+        signal:ctrl.signal
+      });
+    } else {
+      const url=APPS_SCRIPT_URL+'?action=pick&payload='+encodeURIComponent(JSON.stringify({scans}));
+      resp=await fetch(url,{method:'GET',signal:ctrl.signal});
+    }
+    if(!resp.ok) throw new Error(method+' HTTP '+resp.status);
+    const raw=await resp.text();
+    let json;
+    try{ json=JSON.parse(raw); }
+    catch(e){ throw new Error(method+' got non-JSON (check deployment access = Anyone)'); }
+    if(!json.ok) throw new Error(json.error||'Server error');
+    return json.results||[];
+  } finally { clearTimeout(timer); }
+}
+
+async function flush(force){
+  if(flushing) return;
+  if(!outbox.length){ updateSyncBar(); return; }
+  if(force) backoff=0;
+  flushing=true; updateSyncBar('busy');
+  try{
+    while(outbox.length){
+      const batch=outbox.slice(0,15);
+      const results=await postBatch(batch);
+      outbox.splice(0,batch.length); saveOutbox();
+      applyResults(results);
+      backoff=0;
+    }
+    updateSyncBar('ok');
+  }catch(err){
+    backoff=Math.min(backoff?backoff*2:2000,30000);
+    updateSyncBar('bad',err.message);
+    showResult('error','Not saved yet',err.message+' — '+outbox.length+' scan(s) queued, retrying automatically.','');
+    scheduleFlush(backoff);
+  }finally{ flushing=false; }
+}
+
+function applyResults(results){
+  let changed=false;
+  results.forEach(r=>{
+    const s=session.find(x=>x.id===r.id);
+    if(!s) return;
+    changed=true;
+    if(r.status==='ok') s.state='saved';
+    else if(r.status==='duplicate'){
+      s.state='dupe';
+      knownPicking.set(s.order,{ts:r.firstTs,user:r.firstUser,colour:r.colour});
+      showResult('warning','Already scanned',s.order+' was already picked by '+r.firstUser+' at '+r.firstTs+'.',s.order);
+      vibrate([130,70,130]);
+    }
+    else if(r.status==='already_packed'){
+      s.state='dupe';
+      knownPacked.set(s.order,{ts:r.firstTs,user:r.firstUser});
+      knownPicking.delete(s.order);
+    }
+    else s.state='dupe';
+  });
+  if(changed){ saveSession(); renderSession(); renderColours(); }
+}
+
+function updateSyncBar(state,msg){
+  const dot=document.getElementById('sync-dot'), txt=document.getElementById('sync-text');
+  const n=outbox.length;
+  dot.className='sync-dot';
+  if(state==='busy'){ dot.classList.add('busy'); txt.textContent='Saving '+n+'…'; }
+  else if(state==='bad'){ dot.classList.add('bad'); txt.textContent=n+' waiting — '+(msg||'retrying'); }
+  else if(n>0){ dot.classList.add('busy'); txt.textContent=n+' waiting to save'; }
+  else { dot.classList.add('ok'); txt.textContent='All scans saved'; }
+}
+window.addEventListener('online',()=>flush(true));
+window.addEventListener('beforeunload',e=>{ if(outbox.length){ e.preventDefault(); e.returnValue=''; }});
+setInterval(function(){ flush(); },8000);
+
+/* ─────────── KNOWN ORDERS ─────────── */
+async function refreshKnown(manual){
+  try{
+    const [pickText,packText]=await Promise.all([
+      fetch(pickCsv()).then(r=>r.ok?r.text():''),
+      fetch(packCsv()).then(r=>r.ok?r.text():'')
+    ]);
+    if(pickText){
+      const rows=parseCSV(pickText), m=new Map();
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i]; if(!r||r.length<3) continue;
+        const o=(r[2]||'').trim().toUpperCase();
+        if(o) m.set(o,{ts:(r[0]||'').trim(),user:(r[1]||'').trim().toUpperCase(),colour:(r[3]||'').trim().toUpperCase()});
+      }
+      outbox.forEach(s=>{ if(!m.has(s.order)) m.set(s.order,{ts:s.ts,user:s.user,colour:s.colour}); });
+      knownPicking=m;
+    }
+    if(packText){
+      const rows=parseCSV(packText), m=new Map();
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i]; if(!r||r.length<3) continue;
+        const o=(r[2]||'').trim().toUpperCase();
+        if(o) m.set(o,{ts:(r[0]||'').trim(),user:(r[1]||'').trim().toUpperCase()});
+      }
+      knownPacked=m;
+    }
+    renderFloor();
+  }catch(e){ if(manual) showResult('error','Could not refresh',e.message,''); }
+}
+refreshKnown();
+setInterval(function(){ refreshKnown(); },30000);
+
+/* ─────────── RENDER ─────────── */
+function showResult(type,headline,detail,order){
+  const card=document.getElementById('result-card');
+  card.className='show '+type;
+  const icon = type==='success'?'✓':type==='warning'?'⚠':'✗';
+  card.innerHTML=
+    '<div class="result-headline '+type+'"><span>'+icon+'</span><span>'+escHtml(headline)+'</span></div>'+
+    (order?'<div class="result-barcode">'+escHtml(order)+'</div>':'')+
+    '<div class="result-detail">'+escHtml(detail)+'</div>';
+}
+
+function renderSession(){
+  const today=todayUK();
+  const items=session.filter(s=>s.date===today);
+  document.getElementById('session-badge').textContent=items.length;
+  const list=document.getElementById('session-list');
+  if(!items.length){ list.innerHTML='<div class="list-empty">Nothing scanned yet.</div>'; return; }
+  list.innerHTML=items.slice(0,60).map(function(s){
+    const cls=s.state==='saved'?'state-saved':s.state==='dupe'?'state-dupe':'state-pending';
+    const label=s.state==='saved'?'Saved':s.state==='dupe'?'Rejected':'Saving';
+    return '<div class="scan-item" style="border-left-color:'+colourHex(s.colour)+'">'+
+      '<span class="scan-order">'+escHtml(s.order)+'</span>'+
+      '<span class="scan-state '+cls+'">'+label+'</span>'+
+      '<span class="scan-meta">'+escHtml((s.ts||'').split(' ')[1]||'')+'<br>'+escHtml(colourName(s.colour))+'</span>'+
+    '</div>';
+  }).join('');
+}
+
+function renderFloor(){
+  const list=document.getElementById('floor-list');
+  const entries=[...knownPicking.entries()];
+  document.getElementById('floor-badge').textContent=entries.length;
+  if(!entries.length){ list.innerHTML='<div class="list-empty">Nothing outstanding.</div>'; return; }
+  entries.sort(function(a,b){
+    const da=parseUK(a[1].ts), db=parseUK(b[1].ts);
+    return (da?da.getTime():0)-(db?db.getTime():0);
+  });
+  const now=Date.now();
+  list.innerHTML=entries.slice(0,120).map(function(pair){
+    const order=pair[0], d=pair[1];
+    const dt=parseUK(d.ts);
+    let ageTxt='—', cls='';
+    if(dt){
+      const m=Math.floor((now-dt.getTime())/60000);
+      ageTxt = m<60 ? m+'m' : Math.floor(m/60)+'h '+(m%60)+'m';
+      if(m>=60) cls='age-old'; else if(m>=30) cls='age-mid';
+    }
+    return '<div class="scan-item" style="border-left-color:'+colourHex(d.colour)+'">'+
+      '<span class="scan-order">'+escHtml(order)+'</span>'+
+      '<span class="floor-age '+cls+'">'+ageTxt+'</span>'+
+      '<span class="scan-meta">'+escHtml(colourName(d.colour||''))+'</span>'+
+    '</div>';
+  }).join('');
+}
+
+function showModal(title,text,code,colour){
+  const old=document.getElementById('modal-overlay'); if(old) old.remove();
+  const o=document.createElement('div');
+  o.className='modal-overlay'; o.id='modal-overlay';
+  o.innerHTML='<div class="modal-box" style="border:2px solid '+colour+'">'+
+    '<div style="font-size:40px;margin-bottom:6px">🚫</div>'+
+    '<div class="modal-title" style="color:'+colour+'">'+escHtml(title)+'</div>'+
+    '<div class="modal-text">'+escHtml(text)+'</div>'+
+    '<div class="modal-code" style="background:var(--danger-dim);border:1px solid '+colour+';color:'+colour+'">'+escHtml(code)+'</div>'+
+    '<button class="modal-btn" style="background:'+colour+'" onclick="closeModal()">Try again</button>'+
+  '</div>';
+  document.body.appendChild(o);
+  o.addEventListener('click',function(e){ if(e.target===o) closeModal(); });
+}
+function closeModal(){
+  const o=document.getElementById('modal-overlay');
+  if(o) o.remove();
+  focusScan();
+}
+
+/* ─────────── CAMERA ─────────── */
+html5QrCode=new Html5Qrcode('reader');
+const camConfig={fps:10,qrbox:{width:250,height:120},aspectRatio:1.6};
+async function toggleCamera(){
+  const btn=document.getElementById('cam-toggle-btn'), body=document.getElementById('cam-body');
+  if(cameraRunning){
+    try{ await html5QrCode.stop(); }catch(e){}
+    cameraRunning=false; body.classList.remove('open');
+    btn.textContent='▶ Start'; btn.classList.remove('on'); focusScan(); return;
+  }
+  if(cameraStarting) return;
+  cameraStarting=true; body.classList.add('open');
+  btn.textContent='⏳ Starting'; btn.classList.add('on');
+  try{
+    const cams=await Html5Qrcode.getCameras();
+    if(!cams||!cams.length) throw new Error('No cameras found');
+    const cam=cams.find(c=>/back|rear|environment/i.test(c.label))||cams[cams.length-1];
+    await html5QrCode.start({deviceId:{exact:cam.id}},camConfig,onCamScan,function(){})
+      .catch(async function(){ await html5QrCode.start({facingMode:'environment'},camConfig,onCamScan,function(){}); });
+    cameraRunning=true; btn.textContent='■ Stop';
+  }catch(err){
+    body.classList.remove('open'); btn.textContent='▶ Start'; btn.classList.remove('on');
+    showResult('error','Camera unavailable',err.message||'Could not access camera.','');
+  }
+  cameraStarting=false;
+}
+function onCamScan(code){
+  const now=Date.now();
+  if(code===lastCamCode && now-lastCamTime<3000) return;
+  lastCamCode=code; lastCamTime=now;
+  processScan(code);
+}
+
+/* ─────────── BOOT ─────────── */
+renderColours(); updateReady(); renderSession(); updateSyncBar();
+if(outbox.length) scheduleFlush(500);
+setInterval(function(){ renderFloor(); },60000);
+window.addEventListener('load',focusScan);
+focusScan();
+</script>
+</body>
+</html>
