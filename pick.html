@@ -361,8 +361,13 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ focusS
 
 /* ─────────── COLOURS ─────────── */
 function renderColours(){
-  const counts={}, today=todayUK();
-  session.forEach(s=>{ if(s.date===today) counts[s.colour]=(counts[s.colour]||0)+1; });
+  // counts come from the SHEET (orders currently out), not local history,
+  // so removing rows in Sheets is reflected here on the next refresh
+  const counts={};
+  knownPicking.forEach(function(d){
+    const c=(d.colour||'').toUpperCase();
+    if(c) counts[c]=(counts[c]||0)+1;
+  });
   document.getElementById('colour-strip').innerHTML = COLOURS.map(c=>`
     <button class="colour-btn ${selectedColour===c.id?'selected':''}" style="color:${c.hex}" onclick="selectColour('${c.id}')" title="${escHtml(colourName(c.id))}">
       <span class="colour-swatch" style="background:${c.hex}">${counts[c.id]||''}</span>
@@ -632,8 +637,26 @@ async function refreshKnown(manual){
       }
       knownPacked=m;
     }
-    renderFloor();
+    // Only reconcile when BOTH reads succeeded, otherwise a failed fetch
+    // would wrongly wipe the list.
+    if(pickText && packText) reconcileSession();
+    renderColours(); renderFloor(); renderSession();
   }catch(e){ if(manual) showResult('error','Could not refresh',e.message,''); }
+}
+
+/* Drop anything from the local list that no longer exists in the sheet.
+   Saved scans that were deleted in Sheets disappear here too.
+   Packed orders are kept — they moved to the Packing tab, not vanished.
+   Pending scans are kept — they haven't been written yet. */
+function reconcileSession(){
+  const before=session.length;
+  session=session.filter(function(s){
+    if(s.state!=='saved') return true;                 // still queued
+    if(knownPicking.has(s.order)) return true;         // still out
+    if(knownPacked.has(s.order))  return true;         // packed
+    return false;                                      // deleted from sheet
+  });
+  if(session.length!==before) saveSession();
 }
 refreshKnown();
 setInterval(function(){ refreshKnown(); },30000);
