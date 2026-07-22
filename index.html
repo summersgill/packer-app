@@ -87,6 +87,9 @@
     transition: border-color 0.2s, background 0.2s;
   }
   .theme-btn:hover { background: var(--surface2); }
+  .nav-links { display: flex; gap: 5px; }
+  .nav-links a { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 7px; }
+  .nav-links a.current { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
   .status-dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--muted); transition: all 0.3s;
@@ -97,7 +100,7 @@
     50%      { box-shadow: 0 0 14px var(--success); }
   }
 
-  /* ── LAYOUT — single column always ── */
+  /* ── LAYOUT ── */
   main {
     flex: 1;
     padding: 16px;
@@ -111,7 +114,6 @@
   .area-notice, .area-input, .area-camera, .area-result,
   .area-leaderboard, .area-log, .area-debug { width: 100%; }
 
-  /* ── CARDS ── */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -233,8 +235,10 @@
     border-radius: 5px; padding: 4px 8px; word-break: break-all;
   }
   .result-detail { font-size: 12px; color: var(--text2); }
+  .pick-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 9px; border-radius: 6px; background: rgba(128,128,128,0.12); margin-top: 2px; align-self: flex-start; }
+  .pick-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
-  /* ── COLLAPSIBLE PANEL (session log + debug) ── */
+  /* ── COLLAPSIBLE PANEL ── */
   .collapse-header {
     display: flex; align-items: center; justify-content: space-between;
     cursor: pointer; user-select: none;
@@ -258,6 +262,7 @@
   #log-list { display: flex; flex-direction: column; gap: 6px; }
   .log-item {
     background: var(--surface2); border: 1px solid var(--border);
+    border-left-width: 4px;
     border-radius: 8px; padding: 9px 12px;
     display: flex; align-items: center; gap: 10px;
     animation: fadeIn 0.25s ease; transition: background 0.25s;
@@ -319,7 +324,6 @@
   .config-notice strong { display: block; font-size: 13px; margin-bottom: 3px; }
   .config-notice code { background: rgba(255,184,0,0.15); border-radius: 3px; padding: 1px 5px; font-family: 'Share Tech Mono', monospace; font-size: 11px; }
 
-  /* ── Scan ready label — always visible ── */
   .scan-ready-label {
     font-size: 10px; color: var(--accent); font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
@@ -339,6 +343,11 @@
     <p>Dispatch Scanner</p>
   </div>
   <div class="header-right">
+    <div class="nav-links">
+      <a href="picker.html">Pick</a>
+      <a href="packer.html" class="current">Pack</a>
+      <a href="status.html">Board</a>
+    </div>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">☀️</button>
     <div class="status-dot" id="status-dot"></div>
   </div>
@@ -352,7 +361,7 @@
     Replace <code>YOUR_APPS_SCRIPT_URL</code> in this file with your Google Apps Script webhook URL.
   </div>
 
-  <!-- USER + BARCODE INPUT (combined card) -->
+  <!-- USER + BARCODE INPUT -->
   <div class="card area-input">
     <div class="section-label">Operative Name</div>
     <div class="user-row">
@@ -371,7 +380,7 @@
     </div>
   </div>
 
-  <!-- CAMERA — collapsible -->
+  <!-- CAMERA -->
   <div class="card area-camera">
     <div class="cam-header">
       <div class="section-label" style="margin-bottom:0">Camera Scanner</div>
@@ -409,7 +418,7 @@
     <div class="lb-total" id="lb-total"></div>
   </div>
 
-  <!-- SESSION LOG — collapsible -->
+  <!-- SESSION LOG -->
   <div class="card area-log">
     <div class="collapse-header" onclick="toggleCollapse('log')">
       <div style="display:flex;align-items:center;gap:8px;">
@@ -425,7 +434,7 @@
     </div>
   </div>
 
-  <!-- DEBUG — collapsible -->
+  <!-- DEBUG -->
   <div class="card area-debug" id="debug-card" style="display:none">
     <div class="collapse-header" onclick="toggleCollapse('debug')">
       <div class="section-label" style="margin-bottom:0">Debug — Raw CSV Data</div>
@@ -442,10 +451,15 @@
 // ─────────────────────────────────────────────
 // CONFIG
 // ─────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQ1kdPb7oyOnu9XCEDz6shxpQjkfe_xf2G5fUld5ockctorgtz28RwzT54dzMmuz-X/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRxuwp4MEMFabo8PzK-xTDLamXxwW9BeazP7f_VRv0JFjXIkhf_yYSCMaBnP-ZHxhzIA/exec';
 const SHEET_ID  = '1UXSJ8UK41nkE7FtlpebEPnkAJ1yQ9MH-YUaFkMpkJn0';
 const SHEET_GID = '0';
 const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+
+// Colour names shared with the picker app (set via PickerApp > Rename)
+const COLOUR_HEX = { RED:'#ff4560', BLUE:'#2e8bff', GREEN:'#00c853', YELLOW:'#ffc400', PURPLE:'#a855f7', ORANGE:'#ff7a1a' };
+const colourLabels = JSON.parse(localStorage.getItem('pick_colour_labels') || '{}');
+const colourName = id => colourLabels[id] || id;
 
 // ─────────────────────────────────────────────
 // STATE
@@ -529,7 +543,6 @@ function parseUKTimestamp(ts) {
     return new Date(y, m-1, d, h, min, s);
   } catch { return null; }
 }
-let _lastRawTs = '';
 
 function calcAvgTime(timestamps) {
   if (timestamps.length < 2) return null;
@@ -577,7 +590,6 @@ async function loadLeaderboard() {
     const rows = parseCSV(text);
     const today = getTodayUKDateString();
 
-    // Debug panel
     const debugCard=document.getElementById('debug-card');
     const debugOut=document.getElementById('debug-out');
     if(debugCard&&debugOut){
@@ -602,7 +614,6 @@ async function loadLeaderboard() {
       if(tsRaw.substring(0,10)!==today) continue;
       if(!userData[user]) userData[user]={count:0,timestamps:[],firstScan:tsRaw};
       userData[user].count++;
-      _lastRawTs=tsRaw;
       const dt=parseUKTimestamp(tsRaw);
       if(dt) userData[user].timestamps.push(dt);
       total++;
@@ -673,7 +684,6 @@ function setLocked(state){
     lockBtn.classList.add('locked');
     lockBtn.textContent='Edit';
     userHint.textContent=`Scanning as "${userInput.value}" — tap Edit to change.`;
-    // Focus barcode input once user is locked
     setTimeout(()=>barcodeInput.focus(),50);
   } else {
     userInput.classList.remove('locked');
@@ -691,7 +701,6 @@ const barcodeInput=document.getElementById('barcode-input');
 barcodeInput.addEventListener('keydown',e=>{ if(e.key==='Enter') handleManualSubmit(); });
 barcodeInput.addEventListener('input',()=>{ const p=barcodeInput.selectionStart; barcodeInput.value=barcodeInput.value.toUpperCase(); barcodeInput.setSelectionRange(p,p); });
 
-// Auto-focus barcode on load if user already locked
 window.addEventListener('load', () => {
   if(userLocked) barcodeInput.focus();
 });
@@ -751,18 +760,16 @@ function handleCameraScan(barcode){
 }
 
 // ─────────────────────────────────────────────
-// CORE PROCESS
-// ─────────────────────────────────────────────
-// ─────────────────────────────────────────────
 // BARCODE VALIDATION
 // ─────────────────────────────────────────────
 function isValidBarcode(barcode) {
-  // Must NOT start with H00RQA (tracking number prefix)
-  // and must NOT be exactly 16 chars starting with H00RQA
   if (/^H00RQA/i.test(barcode)) return false;
   return true;
 }
 
+// ─────────────────────────────────────────────
+// CORE PROCESS
+// ─────────────────────────────────────────────
 function processBarcode(barcode){
   barcode=barcode.trim().toUpperCase();
   const user=userInput.value.trim().toUpperCase();
@@ -771,7 +778,6 @@ function processBarcode(barcode){
     userInput.focus(); return;
   }
 
-  // Validate barcode — reject tracking numbers
   if(!isValidBarcode(barcode)){
     showInvalidBarcodeModal(barcode);
     barcodeInput.value=''; barcodeInput.focus(); return;
@@ -796,25 +802,54 @@ function processBarcode(barcode){
       if(sessionLog.length&&sessionLog[0].barcode===barcode){
         sessionLog[0].status='duplicate'; sessionLog[0].ts=result.timestamp; sessionLog[0].user=result.user; renderLog();
       }
+    } else if(result.status==='ok'){
+      // show who picked it, if the order came out of the Picking tab
+      if(result.hadPick){
+        showResult('success','✓ Dispatched',`Logged at ${tsUK} by ${user}`,barcode,
+                   {user:result.pickUser,colour:result.pickColour});
+        if(sessionLog.length&&sessionLog[0].barcode===barcode){
+          sessionLog[0].pickUser=result.pickUser; sessionLog[0].pickColour=result.pickColour; renderLog();
+        }
+      } else {
+        if(sessionLog.length&&sessionLog[0].barcode===barcode){
+          sessionLog[0].noPick=true; renderLog();
+        }
+      }
     }
-  }).catch(()=>{
+  }).catch(err=>{
     scannedBarcodes.delete(barcode);
-    showResult('error','✗ Write Failed','Scan again to retry — check connection.',barcode);
+    showResult('error','✗ Write Failed',(err.message||'Unknown error')+' — scan again to retry.',barcode);
     if(sessionLog.length&&sessionLog[0].barcode===barcode){ sessionLog.shift(); renderLog(); }
   });
 }
 
 // ─────────────────────────────────────────────
-// WRITE
+// WRITE — 3 attempts, real error messages.
+// Safe to retry: the server rejects duplicates.
 // ─────────────────────────────────────────────
-async function writeToSheet(barcode,timestamp,user){
-  if(APPS_SCRIPT_URL==='YOUR_APPS_SCRIPT_URL') throw new Error('Apps Script URL not configured.');
+async function writeToSheet(barcode,timestamp,user,attempt){
+  attempt = attempt || 1;
+  if(APPS_SCRIPT_URL==='YOUR_APPS_SCRIPT_URL') throw new Error('Apps Script URL not configured');
   const url=APPS_SCRIPT_URL+'?timestamp='+encodeURIComponent(timestamp)+'&user='+encodeURIComponent(user)+'&barcode='+encodeURIComponent(barcode);
-  const resp=await fetch(url,{method:'GET'});
-  if(!resp.ok) throw new Error('Apps Script returned an error.');
-  const json=await resp.json();
-  if(json.status==='error') throw new Error(json.message||'Unknown error.');
-  return json;
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),20000);
+  try{
+    const resp=await fetch(url,{method:'GET',signal:ctrl.signal});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const raw=await resp.text();
+    let json;
+    try{ json=JSON.parse(raw); }
+    catch{ throw new Error('Non-JSON reply (check deployment access)'); }
+    if(json.status==='error') throw new Error(json.message||'Server error');
+    return json;
+  } catch(err){
+    if(attempt<3){
+      clearTimeout(timer);
+      await new Promise(r=>setTimeout(r,1000*attempt));
+      return writeToSheet(barcode,timestamp,user,attempt+1);
+    }
+    throw err;
+  } finally { clearTimeout(timer); }
 }
 
 // ─────────────────────────────────────────────
@@ -835,22 +870,30 @@ function parseCSV(text){
 // ─────────────────────────────────────────────
 // UI HELPERS
 // ─────────────────────────────────────────────
-function showResult(type,headline,detail,barcode){
+function showResult(type,headline,detail,barcode,pick){
   const card=document.getElementById('result-card');
   card.className='result-card show '+(type==='loading'?'':type);
+  let chip='';
+  if(pick && pick.colour){
+    const hex=COLOUR_HEX[pick.colour]||'#888';
+    chip=`<span class="pick-chip" style="color:${hex}">
+            <span class="pick-dot" style="background:${hex}"></span>
+            Picked by ${escHtml(pick.user||colourName(pick.colour))}
+          </span>`;
+  }
   card.innerHTML=`
     <div class="result-headline ${type}">
       <span>${type==='success'?'✓':type==='warning'?'⚠':type==='error'?'✗':'⟳'}</span>
       <span>${escHtml(headline)}</span>
     </div>
     ${barcode?`<div class="result-barcode">${escHtml(barcode)}</div>`:''}
-    <div class="result-detail">${escHtml(detail)}</div>`;
+    <div class="result-detail">${escHtml(detail)}</div>
+    ${chip}`;
 }
 
 function addToSessionLog(barcode,ts,user,status){
   sessionLog.unshift({barcode,ts,user,status});
   renderLog();
-  // Update badge
   const badge=document.getElementById('log-badge');
   badge.style.display='inline';
   badge.textContent=sessionLog.length;
@@ -863,10 +906,12 @@ function renderLog(){
   sessionLog.slice(0,15).forEach(entry=>{
     const div=document.createElement('div');
     div.className='log-item';
+    div.style.borderLeftColor = entry.pickColour ? (COLOUR_HEX[entry.pickColour]||'var(--border)') : 'var(--border)';
+    const sub = entry.pickUser ? escHtml(entry.pickUser) : (entry.noPick ? 'no pick scan' : escHtml(entry.user));
     div.innerHTML=`
       <div class="log-icon">${entry.status==='success'?'✓':'⚠'}</div>
       <div class="log-barcode">${escHtml(entry.barcode)}</div>
-      <div class="log-meta"><span>${escHtml(entry.ts)}</span><span>${escHtml(entry.user)}</span></div>`;
+      <div class="log-meta"><span>${escHtml(entry.ts)}</span><span>${sub}</span></div>`;
     list.insertBefore(div,list.firstChild);
   });
 }
@@ -881,7 +926,6 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 // INVALID BARCODE MODAL
 // ─────────────────────────────────────────────
 function showInvalidBarcodeModal(barcode) {
-  // Remove any existing modal
   const existing = document.getElementById('invalid-modal-overlay');
   if(existing) existing.remove();
 
