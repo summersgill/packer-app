@@ -80,6 +80,28 @@
   .matrix td.zero{color:var(--border)}
   .matrix th.rot{font-size:9px}
   .pill{display:inline-block;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;background:var(--surface2);color:var(--text2);letter-spacing:.04em}
+
+  /* ── MINTSOFT STRIP ── */
+  .ms-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .ms-title{font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .ms-updated{font-size:11px;color:var(--muted);font-family:'Share Tech Mono',monospace}
+  .ms-pull{margin-left:auto;background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'Barlow',sans-serif;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;cursor:pointer}
+  .ms-pull:hover{background:var(--accent);color:#fff}
+  .ms-pull:disabled{opacity:.55;cursor:default}
+  .ms-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px}
+  .ms-tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:block;text-decoration:none;color:inherit;position:relative}
+  a.ms-tile{transition:border-color .15s,transform .08s}
+  a.ms-tile:hover{border-color:var(--accent);transform:translateY(-1px)}
+  a.ms-tile::after{content:'View →';position:absolute;top:12px;right:12px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  .ms-num{font-size:32px;font-weight:900;font-family:'Share Tech Mono',monospace;line-height:1}
+  .ms-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .ms-sub{font-size:11px;color:var(--text2);margin-top:7px;padding-top:7px;border-top:1px solid var(--border)}
+  .ms-sub b{font-family:'Share Tech Mono',monospace}
+  .ms-split{display:flex;gap:14px;flex-wrap:wrap}
+  .ms-ok{color:var(--success)}
+  .ms-late{color:var(--danger)}
+  .ms-early{color:var(--text2)}
+  .ms-warn{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -103,6 +125,49 @@
 </header>
 
 <main>
+
+  <!-- ── MINTSOFT ORDERS ── -->
+  <div class="card">
+    <div class="ms-head">
+      <span class="ms-title">Mintsoft Orders</span>
+      <span class="ms-updated" id="ms-updated">Loading…</span>
+      <button class="ms-pull" id="ms-pull" onclick="pullMintsoft()">Pull from Mintsoft</button>
+    </div>
+    <div class="ms-row">
+
+      <div class="ms-tile">
+        <div class="ms-label">Active orders</div>
+        <div class="ms-num" id="ms-active">–</div>
+        <div class="ms-sub ms-split">
+          <span><b id="ms-new">–</b> New</span>
+          <span><b id="ms-printed">–</b> Printed</span>
+        </div>
+      </div>
+
+      <a class="ms-tile" id="ms-due-tile" href="https://summersgill.github.io/dashboard/due-orders.html" target="_blank" rel="noopener">
+        <div class="ms-label">Total due today</div>
+        <div class="ms-num ms-warn" id="ms-due-today">–</div>
+        <div class="ms-sub"><b id="ms-due-priority">–</b> priority + <b id="ms-due-other">–</b> other</div>
+      </a>
+
+      <div class="ms-tile">
+        <div class="ms-label">Due next working day</div>
+        <div class="ms-num" id="ms-due-next">–</div>
+        <div class="ms-sub" id="ms-next-day">&nbsp;</div>
+      </div>
+
+      <div class="ms-tile">
+        <div class="ms-label">Checked today</div>
+        <div class="ms-num ms-ok" id="ms-checked">–</div>
+        <div class="ms-sub ms-split">
+          <span class="ms-ok"><b id="ms-ontime">–</b> on time</span>
+          <span class="ms-late"><b id="ms-late">–</b> late</span>
+          <span class="ms-early"><b id="ms-early">–</b> early</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
   <div class="stat-row">
     <div class="stat packed">
@@ -203,6 +268,111 @@ const packCsv = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export
 const pickCsv = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(PICK_TAB)}&t=${Date.now()}`;
 
 const COLOUR_HEX = { RED:'#ff4560', BLUE:'#2e8bff', GREEN:'#00c853', YELLOW:'#ffc400', PURPLE:'#a855f7', ORANGE:'#ff7a1a' };
+
+/* ───────── MINTSOFT ORDERS ───────── */
+const MINTSOFT_SHEET_ID = '1coV2Fu--l56x4N0A-gtFLVDWGWPAY6D_-6q9O9JxEEY';
+const MINTSOFT_TAB      = 'ordercount';
+const MINTSOFT_GID      = '983120626';   // fallback if the tab name lookup fails
+
+// Paste the /exec URL of the MINTSOFT Apps Script project here.
+// (That's a different project to the scanner one — it's the script that
+//  defines runCountsAndSave / doGet with ?refresh=1.)
+const MINTSOFT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtL1VaBae2_htLIzKJb1K7oVo4E18P3DksqGxwcFfjeIRGqIzv9wjXFXrkkWeWB5AUZQ/exec';
+
+const msCsv     = () => `https://docs.google.com/spreadsheets/d/${MINTSOFT_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(MINTSOFT_TAB)}&t=${Date.now()}`;
+const msCsvGid  = () => `https://docs.google.com/spreadsheets/d/${MINTSOFT_SHEET_ID}/export?format=csv&gid=${MINTSOFT_GID}&t=${Date.now()}`;
+
+let ms = {};
+
+function msNum(key){
+  const v = parseInt(String(ms[key] || '').replace(/[^0-9-]/g,''), 10);
+  return isNaN(v) ? 0 : v;
+}
+const fmtNum = n => n.toLocaleString('en-GB');
+
+async function loadMintsoft(){
+  let text = '';
+  try{
+    const r = await fetch(msCsv());
+    if(r.ok) text = await r.text();
+  }catch(e){}
+  if(!text || text.indexOf('Status') === -1){
+    try{
+      const r2 = await fetch(msCsvGid());
+      if(r2.ok) text = await r2.text();
+    }catch(e){}
+  }
+  if(!text){
+    document.getElementById('ms-updated').textContent = 'Could not read ordercount tab';
+    return;
+  }
+  const rows = parseCSV(text), map = {};
+  rows.forEach(function(r){
+    if(!r || r.length < 2) return;
+    const k = (r[0]||'').trim();
+    if(k) map[k] = (r[1]||'').trim();
+  });
+  ms = map;
+  renderMintsoft();
+}
+
+function renderMintsoft(){
+  const active   = msNum('Active Total (New + Printed)') || (msNum('New') + msNum('Printed'));
+  const priority = msNum('Due Today');
+  const other    = msNum('Due Today (other services)');
+  const checked  = msNum('Despatched Today');
+
+  document.getElementById('ms-active').textContent      = fmtNum(active);
+  document.getElementById('ms-new').textContent         = fmtNum(msNum('New'));
+  document.getElementById('ms-printed').textContent     = fmtNum(msNum('Printed'));
+
+  document.getElementById('ms-due-today').textContent   = fmtNum(priority + other);
+  document.getElementById('ms-due-priority').textContent= fmtNum(priority);
+  document.getElementById('ms-due-other').textContent   = fmtNum(other);
+
+  document.getElementById('ms-due-next').textContent    = fmtNum(msNum('Due Next Working Day'));
+  document.getElementById('ms-next-day').textContent    = ms['Next despatch day'] || '\u00a0';
+
+  document.getElementById('ms-checked').textContent     = fmtNum(checked);
+  document.getElementById('ms-ontime').textContent      = fmtNum(msNum('Checked - On Time'));
+  document.getElementById('ms-late').textContent        = fmtNum(msNum('Checked - Late'));
+  document.getElementById('ms-early').textContent       = fmtNum(msNum('Checked - Early'));
+
+  document.getElementById('ms-updated').textContent =
+    ms['Last Updated'] ? 'Updated ' + ms['Last Updated'] : '';
+}
+
+async function pullMintsoft(){
+  const btn = document.getElementById('ms-pull');
+  const lbl = document.getElementById('ms-updated');
+  if(!MINTSOFT_SCRIPT_URL){
+    lbl.textContent = 'Set MINTSOFT_SCRIPT_URL in status.html first';
+    return;
+  }
+  btn.disabled = true;
+  const started = Date.now();
+  const tick = setInterval(function(){
+    btn.textContent = 'Pulling… ' + Math.round((Date.now()-started)/1000) + 's';
+  }, 1000);
+  btn.textContent = 'Pulling… 0s';
+  lbl.textContent = 'Contacting Mintsoft — this can take a minute';
+  try{
+    const resp = await fetch(MINTSOFT_SCRIPT_URL + '?refresh=1&t=' + Date.now());
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    const raw = await resp.text();
+    let json;
+    try{ json = JSON.parse(raw); }
+    catch(e){ throw new Error('Non-JSON reply (check deployment access = Anyone)'); }
+    if(json.ok === false) throw new Error(json.error || 'Script error');
+    await loadMintsoft();
+  }catch(err){
+    lbl.textContent = 'Pull failed — ' + err.message;
+  }finally{
+    clearInterval(tick);
+    btn.disabled = false;
+    btn.textContent = 'Pull from Mintsoft';
+  }
+}
 
 const savedTheme = localStorage.getItem('dispatch_theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
@@ -452,7 +622,9 @@ function render(){
 
 document.getElementById('search').addEventListener('input', render);
 load();
+loadMintsoft();
 setInterval(load, 20000);
+setInterval(loadMintsoft, 120000);
 setInterval(render, 60000);
 </script>
 </body>
