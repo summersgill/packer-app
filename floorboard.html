@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floor Board</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700;900&display=swap');
+  :root, [data-theme="dark"] {
+    --bg:#0d0f14; --surface:#161920; --surface2:#1e2230; --border:#252830;
+    --accent:#00e5ff; --accent-dim:rgba(0,229,255,0.12);
+    --success:#00ff88; --success-dim:rgba(0,255,136,0.12);
+    --warn:#ffb800; --warn-dim:rgba(255,184,0,0.12);
+    --danger:#ff4560; --danger-dim:rgba(255,69,96,0.12);
+    --text:#e8eaf0; --text2:#a0a8b8; --muted:#5a6070;
+  }
+  [data-theme="light"] {
+    --bg:#f0f2f7; --surface:#fff; --surface2:#e8eaf2; --border:#d0d4e0;
+    --accent:#0077cc; --accent-dim:rgba(0,119,204,0.10);
+    --success:#00994d; --success-dim:rgba(0,153,77,0.10);
+    --warn:#c47f00; --warn-dim:rgba(196,127,0,0.10);
+    --danger:#cc2244; --danger-dim:rgba(204,34,68,0.10);
+    --text:#1a1e2e; --text2:#4a5068; --muted:#8890a8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100dvh}
+  header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;background:var(--surface);position:sticky;top:0;z-index:10}
+  .logo-mark{width:30px;height:30px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center}
+  [data-theme="dark"] .logo-mark svg{fill:#0d0f14}
+  [data-theme="light"] .logo-mark svg{fill:#fff}
+  .logo-mark svg{width:16px;height:16px}
+  .header-text h1{font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .header-text p{font-size:9px;color:var(--muted);letter-spacing:.06em}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+  .nav-links{display:flex;gap:5px}
+  .nav-links a{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px}
+  .nav-links a.current{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+  .theme-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px;color:var(--text2)}
+
+  main{padding:14px;max-width:1250px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px}
+  .section-label{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .head-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;gap:10px}
+  .updated{font-size:10px;color:var(--muted);font-family:'Share Tech Mono',monospace}
+  .refresh-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:10px;padding:4px 10px;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .stat-num{font-size:32px;font-weight:900;font-family:'Share Tech Mono',monospace;line-height:1}
+  .stat-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+  .stat-sub{font-size:10px;color:var(--text2);margin-top:3px;font-family:'Share Tech Mono',monospace}
+  .stat.packed .stat-num{color:var(--success)}
+  .stat.picking .stat-num{color:var(--warn)}
+  .stat.aged .stat-num{color:var(--danger)}
+  .stat.nopick .stat-num{color:var(--text2)}
+
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .cols3{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:900px){ .cols2,.cols3{grid-template-columns:1fr} }
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 7px;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:6px 7px;border-bottom:1px solid var(--border)}
+  tr:last-child td{border-bottom:none}
+  tfoot td{font-weight:900;border-top:2px solid var(--border);border-bottom:none;font-family:'Share Tech Mono',monospace}
+  .mono{font-family:'Share Tech Mono',monospace}
+  .num{text-align:right;font-family:'Share Tech Mono',monospace;font-weight:700}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+  .age-old{color:var(--danger);font-weight:700}
+  .age-mid{color:var(--warn);font-weight:700}
+  .empty{font-size:12px;color:var(--muted);text-align:center;padding:20px 0}
+  .scroll{max-height:460px;overflow:auto}
+  .search{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:14px;outline:none;width:100%}
+  .search:focus{border-color:var(--accent)}
+  .bar{height:5px;border-radius:3px;background:var(--accent);min-width:2px}
+  .bar-wrap{background:var(--surface2);border-radius:3px;overflow:hidden;width:100%;margin-top:3px}
+  .muted{color:var(--muted)}
+  .matrix td.num{font-size:12px}
+  .matrix td.zero{color:var(--border)}
+  .matrix th.rot{font-size:9px}
+  .pill{display:inline-block;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;background:var(--surface2);color:var(--text2);letter-spacing:.04em}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v5h-8V3zM3 13h8v8H3v-8zm10 3h8v5h-8v-5zm0-6h8v4h-8v-4z"/></svg>
+  </div>
+  <div class="header-text">
+    <h1>Floor Board</h1>
+    <p>Pick &amp; Pack — today</p>
+  </div>
+  <div class="header-right">
+    <div class="nav-links">
+      <a href="picker.html">Pick</a>
+      <a href="packer.html">Pack</a>
+      <a href="status.html" class="current">Board</a>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀️</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="stat-row">
+    <div class="stat packed">
+      <div class="stat-num" id="s-packed">–</div>
+      <div class="stat-label">Packed today</div>
+      <div class="stat-sub" id="s-packed-sub">&nbsp;</div>
+    </div>
+    <div class="stat picking">
+      <div class="stat-num" id="s-picking">–</div>
+      <div class="stat-label">Still in pick</div>
+      <div class="stat-sub" id="s-picking-sub">&nbsp;</div>
+    </div>
+    <div class="stat aged">
+      <div class="stat-num" id="s-aged">–</div>
+      <div class="stat-label">Waiting over 1 hr</div>
+      <div class="stat-sub" id="s-aged-sub">&nbsp;</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="s-picked">–</div>
+      <div class="stat-label">Picked today</div>
+      <div class="stat-sub" id="s-picked-sub">&nbsp;</div>
+    </div>
+    <div class="stat nopick">
+      <div class="stat-num" id="s-nopick">–</div>
+      <div class="stat-label">Packed, never picked</div>
+      <div class="stat-sub" id="s-nopick-sub">&nbsp;</div>
+    </div>
+  </div>
+
+  <div class="head-row">
+    <input class="search" id="search" placeholder="Search an order number…" autocomplete="off">
+    <button class="refresh-btn" onclick="load()">↻ Refresh</button>
+    <span class="updated" id="updated">–</span>
+  </div>
+
+  <!-- PICKER / PACKER BREAKDOWNS -->
+  <div class="cols2">
+    <div class="card">
+      <div class="section-label">Pickers today</div>
+      <table>
+        <thead><tr><th>Picker</th><th class="num">Picked</th><th class="num">Packed</th><th class="num">Still out</th><th class="num">First</th><th class="num">Last</th></tr></thead>
+        <tbody id="picker-body"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+        <tfoot id="picker-foot"></tfoot>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Packers today</div>
+      <table>
+        <thead><tr><th>Packer</th><th class="num">Packed</th><th class="num">First</th><th class="num">Last</th><th class="num">Avg/pkg</th></tr></thead>
+        <tbody id="packer-body"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+        <tfoot id="packer-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- HANDOFF MATRIX -->
+  <div class="card">
+    <div class="section-label">Who packed whose picks — today</div>
+    <div class="scroll">
+      <table class="matrix">
+        <thead id="matrix-head"></thead>
+        <tbody id="matrix-body"><tr><td class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LIVE LISTS -->
+  <div class="cols3">
+    <div class="card">
+      <div class="section-label">In pick status — oldest first</div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Order</th><th>Picker</th><th>Scanned</th><th class="num">Waiting</th></tr></thead>
+          <tbody id="pick-body"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Packed today — newest first</div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Order</th><th>Packer</th><th>Picked by</th><th class="num">Pick→Pack</th><th class="num">Time</th></tr></thead>
+          <tbody id="pack-body"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const SHEET_ID = '1UXSJ8UK41nkE7FtlpebEPnkAJ1yQ9MH-YUaFkMpkJn0';
+const PACK_GID = '0';
+const PICK_TAB = 'Picking';
+const packCsv = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${PACK_GID}&t=${Date.now()}`;
+const pickCsv = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(PICK_TAB)}&t=${Date.now()}`;
+
+const COLOUR_HEX = { RED:'#ff4560', BLUE:'#2e8bff', GREEN:'#00c853', YELLOW:'#ffc400', PURPLE:'#a855f7', ORANGE:'#ff7a1a' };
+
+const savedTheme = localStorage.getItem('dispatch_theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.getElementById('theme-btn').textContent = savedTheme==='dark'?'☀️':'🌙';
+function toggleTheme(){
+  const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  document.getElementById('theme-btn').textContent=next==='dark'?'☀️':'🌙';
+  localStorage.setItem('dispatch_theme',next);
+}
+
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function todayUK(){ return new Date().toLocaleDateString('en-GB',{timeZone:'Europe/London',day:'2-digit',month:'2-digit',year:'numeric'}); }
+function parseUK(ts){
+  const p=String(ts).trim().replace(',','').split(' ').filter(Boolean);
+  if(p.length<2) return null;
+  const d=p[0].split('/'), t=p[1].split(':');
+  if(d.length<3||t.length<2) return null;
+  const dt=new Date(+d[2],+d[1]-1,+d[0],+t[0],+t[1],+(t[2]||0));
+  return isNaN(dt)?null:dt;
+}
+function parseCSV(text){
+  const rows=[]; let row=[],cur='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=c; }
+    else{
+      if(c==='"') inQ=true;
+      else if(c===','){ row.push(cur); cur=''; }
+      else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else if(c!=='\r') cur+=c;
+    }
+  }
+  if(cur||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+const hhmm = ts => (String(ts||'').split(' ')[1]||'').substring(0,5) || '—';
+function mins(ms){
+  const m=Math.round(ms/60000);
+  return m<60 ? m+'m' : Math.floor(m/60)+'h '+(m%60)+'m';
+}
+function ageText(m){ return m<60 ? m+'m' : Math.floor(m/60)+'h '+(m%60)+'m'; }
+function avgLabel(ms){
+  const s=Math.round(ms/1000);
+  if(s<60) return s+'s';
+  return Math.floor(s/60)+'m '+(s%60)+'s';
+}
+
+let picking=[], packed=[];
+
+async function load(){
+  try{
+    const [pickText,packText]=await Promise.all([
+      fetch(pickCsv()).then(r=>r.ok?r.text():''),
+      fetch(packCsv()).then(r=>r.ok?r.text():'')
+    ]);
+
+    picking=[];
+    if(pickText){
+      const rows=parseCSV(pickText);
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i]; if(!r||r.length<3) continue;
+        const order=(r[2]||'').trim().toUpperCase();
+        if(!order) continue;
+        picking.push({ order, ts:(r[0]||'').trim(), user:(r[1]||'').trim().toUpperCase(), colour:(r[3]||'').trim().toUpperCase() });
+      }
+    }
+
+    packed=[];
+    if(packText){
+      const rows=parseCSV(packText), today=todayUK();
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i]; if(!r||r.length<3) continue;
+        const ts=(r[0]||'').trim();
+        if(ts.substring(0,10)!==today) continue;
+        packed.push({
+          ts, user:(r[1]||'').trim().toUpperCase(), order:(r[2]||'').trim().toUpperCase(),
+          pickTs:(r[3]||'').trim(), pickUser:(r[4]||'').trim().toUpperCase(), colour:(r[5]||'').trim().toUpperCase()
+        });
+      }
+    }
+    render();
+    document.getElementById('updated').textContent='Updated '+new Date().toLocaleTimeString('en-GB');
+  }catch(err){
+    document.getElementById('updated').textContent='Update failed — '+err.message;
+  }
+}
+
+function render(){
+  const now=Date.now();
+  const q=document.getElementById('search').value.trim().toUpperCase();
+  const today=todayUK();
+
+  // ---------- outstanding picks with ages ----------
+  const out=picking.map(p=>{
+    const dt=parseUK(p.ts);
+    return Object.assign({}, p, { dt, mins: dt ? Math.floor((now-dt.getTime())/60000) : null });
+  }).sort((a,b)=>(a.dt?a.dt.getTime():0)-(b.dt?b.dt.getTime():0));
+
+  const aged=out.filter(p=>p.mins!==null && p.mins>=60);
+  const packedWithPick=packed.filter(p=>p.pickUser);
+  const packedNoPick=packed.filter(p=>!p.pickUser);
+  const pickedTodayOut=out.filter(p=>p.ts.substring(0,10)===today).length;
+  const pickedToday=pickedTodayOut+packedWithPick.length;
+
+  // ---------- headline stats ----------
+  document.getElementById('s-packed').textContent=packed.length;
+  document.getElementById('s-packed-sub').textContent=packedWithPick.length+' from a pick scan';
+  document.getElementById('s-picking').textContent=out.length;
+  document.getElementById('s-picking-sub').textContent=out.length?'oldest '+(out[0].mins!==null?ageText(out[0].mins):'—'):'all clear';
+  document.getElementById('s-aged').textContent=aged.length;
+  document.getElementById('s-aged-sub').textContent=aged.length?'chase these':'nothing overdue';
+  document.getElementById('s-picked').textContent=pickedToday;
+  document.getElementById('s-picked-sub').textContent=pickedTodayOut+' still out';
+  document.getElementById('s-nopick').textContent=packedNoPick.length;
+  document.getElementById('s-nopick-sub').textContent=packed.length?Math.round(packedNoPick.length/packed.length*100)+'% of packs':'—';
+
+  // ---------- picker table ----------
+  const pk={};
+  function pkRow(name,colour){
+    if(!pk[name]) pk[name]={name,colour:colour||'',packed:0,out:0,times:[]};
+    if(colour && !pk[name].colour) pk[name].colour=colour;
+    return pk[name];
+  }
+  packedWithPick.forEach(p=>{
+    const r=pkRow(p.pickUser,p.colour); r.packed++;
+    const dt=parseUK(p.pickTs); if(dt) r.times.push(dt);
+  });
+  out.forEach(p=>{
+    const r=pkRow(p.user||'UNKNOWN',p.colour); r.out++;
+    if(p.dt) r.times.push(p.dt);
+  });
+  const pkList=Object.values(pk).sort((a,b)=>(b.packed+b.out)-(a.packed+a.out));
+  const pkBody=document.getElementById('picker-body');
+  pkBody.innerHTML = pkList.length ? pkList.map(r=>{
+    r.times.sort((a,b)=>a-b);
+    const first=r.times.length?r.times[0]:null, last=r.times.length?r.times[r.times.length-1]:null;
+    const fmtT=d=>d?String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'):'—';
+    return `<tr>
+      <td><span class="dot" style="background:${COLOUR_HEX[r.colour]||'#888'}"></span>${escHtml(r.name)}</td>
+      <td class="num">${r.packed+r.out}</td>
+      <td class="num" style="color:var(--success)">${r.packed}</td>
+      <td class="num" style="color:${r.out?'var(--warn)':'var(--muted)'}">${r.out}</td>
+      <td class="num muted">${fmtT(first)}</td>
+      <td class="num muted">${fmtT(last)}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" class="empty">No pick activity today.</td></tr>';
+  document.getElementById('picker-foot').innerHTML = pkList.length
+    ? `<tr><td>Total</td><td class="num">${pkList.reduce((a,b)=>a+b.packed+b.out,0)}</td>
+       <td class="num">${pkList.reduce((a,b)=>a+b.packed,0)}</td>
+       <td class="num">${pkList.reduce((a,b)=>a+b.out,0)}</td><td></td><td></td></tr>` : '';
+
+  // ---------- packer table ----------
+  const pc={};
+  packed.forEach(p=>{
+    const n=p.user||'UNKNOWN';
+    if(!pc[n]) pc[n]={name:n,count:0,times:[]};
+    pc[n].count++;
+    const dt=parseUK(p.ts); if(dt) pc[n].times.push(dt);
+  });
+  const pcList=Object.values(pc).sort((a,b)=>b.count-a.count);
+  document.getElementById('packer-body').innerHTML = pcList.length ? pcList.map(r=>{
+    r.times.sort((a,b)=>a-b);
+    const gaps=[];
+    for(let i=1;i<r.times.length;i++){ const g=r.times[i]-r.times[i-1]; if(g<=600000) gaps.push(g); }
+    const avg=gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:null;
+    const fmtT=d=>d?String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'):'—';
+    const cls=avg===null?'':avg>70000?'age-old':avg>=59000?'age-mid':'';
+    return `<tr>
+      <td>${escHtml(r.name)}</td>
+      <td class="num" style="color:var(--success)">${r.count}</td>
+      <td class="num muted">${fmtT(r.times[0])}</td>
+      <td class="num muted">${fmtT(r.times[r.times.length-1])}</td>
+      <td class="num ${cls}">${avg!==null?avgLabel(avg):'—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="5" class="empty">Nothing packed today.</td></tr>';
+  document.getElementById('packer-foot').innerHTML = pcList.length
+    ? `<tr><td>Total</td><td class="num">${packed.length}</td><td></td><td></td><td></td></tr>` : '';
+
+  // ---------- handoff matrix ----------
+  const pickers=[...new Set(packedWithPick.map(p=>p.pickUser))].sort();
+  const packers=[...new Set(packed.map(p=>p.user||'UNKNOWN'))].sort();
+  const cell={};
+  packed.forEach(p=>{
+    const pu=p.pickUser||'(no pick)', pa=p.user||'UNKNOWN';
+    cell[pu+'||'+pa]=(cell[pu+'||'+pa]||0)+1;
+  });
+  const rowKeys=pickers.slice();
+  if(packedNoPick.length) rowKeys.push('(no pick)');
+
+  if(!packers.length){
+    document.getElementById('matrix-head').innerHTML='';
+    document.getElementById('matrix-body').innerHTML='<tr><td class="empty">Nothing packed today.</td></tr>';
+  } else {
+    document.getElementById('matrix-head').innerHTML =
+      '<tr><th>Picked by ↓ / Packed by →</th>'+
+      packers.map(p=>`<th class="num rot">${escHtml(p)}</th>`).join('')+
+      '<th class="num">Total</th></tr>';
+    document.getElementById('matrix-body').innerHTML = rowKeys.map(pu=>{
+      const colour=(packedWithPick.find(x=>x.pickUser===pu)||{}).colour||'';
+      let rowTotal=0;
+      const cells=packers.map(pa=>{
+        const v=cell[pu+'||'+pa]||0; rowTotal+=v;
+        return `<td class="num ${v?'':'zero'}">${v||'·'}</td>`;
+      }).join('');
+      return `<tr>
+        <td>${pu==='(no pick)'?'<span class="pill">no pick scan</span>':`<span class="dot" style="background:${COLOUR_HEX[colour]||'#888'}"></span>${escHtml(pu)}`}</td>
+        ${cells}<td class="num" style="font-weight:900">${rowTotal}</td>
+      </tr>`;
+    }).join('') +
+    `<tr><td style="font-weight:900">Total</td>${
+      packers.map(pa=>`<td class="num" style="font-weight:900">${packed.filter(p=>(p.user||'UNKNOWN')===pa).length}</td>`).join('')
+    }<td class="num" style="font-weight:900">${packed.length}</td></tr>`;
+  }
+
+  // ---------- in pick list ----------
+  const pickRows=out.filter(p=>!q||p.order.includes(q));
+  document.getElementById('pick-body').innerHTML = pickRows.length
+    ? pickRows.slice(0,500).map(p=>{
+        const cls=p.mins===null?'':p.mins>=60?'age-old':p.mins>=30?'age-mid':'';
+        return `<tr>
+          <td class="mono"><span class="dot" style="background:${COLOUR_HEX[p.colour]||'#888'}"></span>${escHtml(p.order)}</td>
+          <td>${escHtml(p.user)}</td>
+          <td class="mono muted" style="font-size:11px">${hhmm(p.ts)}</td>
+          <td class="num ${cls}">${p.mins!==null?ageText(p.mins):'—'}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="4" class="empty">${q?'No match for that order.':'Nothing in pick status.'}</td></tr>`;
+
+  // ---------- packed list ----------
+  const packRows=[...packed].reverse().filter(p=>!q||p.order.includes(q));
+  document.getElementById('pack-body').innerHTML = packRows.length
+    ? packRows.slice(0,500).map(p=>{
+        let lead='—';
+        const a=parseUK(p.pickTs), b=parseUK(p.ts);
+        if(a&&b&&b>a) lead=mins(b-a);
+        return `<tr>
+          <td class="mono">${p.colour?`<span class="dot" style="background:${COLOUR_HEX[p.colour]||'#888'}"></span>`:''}${escHtml(p.order)}</td>
+          <td>${escHtml(p.user)}</td>
+          <td>${p.pickUser?escHtml(p.pickUser):'<span class="pill">no pick scan</span>'}</td>
+          <td class="num muted">${lead}</td>
+          <td class="num mono muted" style="font-size:11px">${hhmm(p.ts)}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="5" class="empty">${q?'No match for that order.':'Nothing packed yet today.'}</td></tr>`;
+}
+
+document.getElementById('search').addEventListener('input', render);
+load();
+setInterval(load, 20000);
+setInterval(render, 60000);
+</script>
+</body>
+</html>
