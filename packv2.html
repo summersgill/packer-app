@@ -221,7 +221,10 @@
       <button class="cam-btn" id="preview-btn" onclick="togglePreview()">▶ Preview</button>
     </div>
 
-    <select class="cam-select" id="cam-select" onchange="switchCamera(this.value)" style="display:none"></select>
+    <select class="cam-select" id="cam-select"
+            onpointerdown="holdFocus()" onfocus="holdFocus()"
+            onchange="switchCamera(this.value);releaseFocus()"
+            onblur="releaseFocus()" style="display:none"></select>
 
     <div class="preview-wrap" id="preview-wrap">
       <div class="video-frame">
@@ -365,13 +368,25 @@ function toggleCollapse(id){
 
 /* ─────────── FOCUS ─────────── */
 const barcodeInput=document.getElementById('barcode-input');
+
+/* While interacting with the camera controls (dropdown, preview, toggle)
+   focus-stealing is suspended, otherwise the select closes the instant
+   it opens. Any hold expires by itself after 8s as a safety net. */
+let focusHoldUntil = 0;
+function holdFocus(ms){ focusHoldUntil = Date.now() + (ms || 8000); }
+function releaseFocus(){ focusHoldUntil = 0; focusScan(); }
+
 function focusScan(){
+  if(Date.now() < focusHoldUntil) return;
   if(document.getElementById('modal-overlay')) return;
+  const a=document.activeElement;
+  if(a && (a.tagName==='SELECT' || a.id==='cam-select' || a.id==='user-input')) return;
   setTimeout(()=>{ try{ barcodeInput.focus({preventScroll:true}); }catch(e){ barcodeInput.focus(); } },0);
 }
 document.addEventListener('keydown', e=>{
   const t=e.target;
   if(t && (t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable)) return;
+  if(Date.now() < focusHoldUntil) return;
   if(e.key.length===1 || e.key==='Enter') focusScan();
 });
 document.addEventListener('click', e=>{
@@ -485,7 +500,8 @@ function togglePreview(){
   wrap.classList.toggle('open',previewOpen);
   btn.classList.toggle('on',previewOpen);
   btn.textContent = previewOpen ? '■ Close preview' : '▶ Preview';
-  focusScan();
+  // give the user a moment to reach the camera dropdown before focus returns
+  if(previewOpen) holdFocus(6000); else releaseFocus();
 }
 
 function toggleCapture(){
